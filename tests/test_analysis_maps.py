@@ -242,7 +242,10 @@ def test_places_around_are_drawn_pale_and_named(result):
     # A place far outside the frame is not drawn at all.
     assert len(_paths(svg, "land")) == 2
     # The place that holds the shaded areas gets a darker line and one name.
-    assert len(_paths(svg, "outline")) == 1
+    # Nothing says its outline stops at the shore, so the line goes all round.
+    (line,) = _paths(svg, "outline")
+    assert line.get("d").endswith("Z")
+    assert _paths(svg, "shoreline") == []
     assert _texts(svg, "held") == ["Lewisham"]
     assert _texts(svg, "near") == ["Greenwich"]
     assert "Hartlepool" not in svg
@@ -351,6 +354,57 @@ def test_a_speck_of_the_shore_moves_neither_the_frame_nor_the_name(result):
 
     assert seen(svg) == seen(plain)
     assert _texts(svg, "ink") == _texts(plain, "ink")
+
+
+def _across(path: ET.Element) -> list[float]:
+    """How far across the picture each point of a line is."""
+    return [float(x) for x in re.findall(r"[ML] (-?[\d.]+) ", path.get("d"))]
+
+
+def test_the_line_round_a_place_is_dark_only_beside_other_land(result):
+    # Lewisham stops at the shore, and Greenwich is on its east side. A dark
+    # line all round ran along both banks of a tidal river inside a real
+    # city, and read as a border that split it in two.
+    svg = render_map(result, boundaries=_with_a_shore())
+    (thin,) = _paths(svg, "shoreline")
+    assert thin.get("d").endswith("Z")
+    east = max(_across(thin))
+    (dark,) = _paths(svg, "outline")
+    assert not dark.get("d").endswith("Z")
+    assert set(_across(dark)) == {east}
+    # Greenwich ends where Lewisham does, north and south. The stretches of
+    # Lewisham's edge that lead away from those corners have water beside
+    # them, though each starts at a point that has land beside it.
+    assert len(_across(dark)) == 2
+    # With no other place on the map there is nothing to be a border with.
+    alone = _with_a_shore()
+    del alone["surroundings"][1]
+    svg = render_map(result, boundaries=alone)
+    assert len(_paths(svg, "shoreline")) == 1
+    assert _paths(svg, "outline") == []
+
+
+def test_other_land_is_beside_a_line_when_its_edge_is_close():
+    edge = [[(100.0, 0.0), (100.0, 400.0)]]
+    close = maps._Meeting(edge, 1.5)
+    assert close.holds((100.0, 200.0))
+    assert close.holds((101.4, 399.0))
+    assert close.holds((98.6, 37.3))
+    # A river five dots wide has no land beside its far bank.
+    assert not close.holds((105.0, 200.0))
+    assert not close.holds((100.0, 410.0))
+    assert not maps._Meeting([], 1.5).holds((100.0, 200.0))
+
+
+def test_a_rough_neighbour_is_beside_a_line_from_further_off():
+    # A neighbour simplified to 200 metres does not sit on the line, so it
+    # counts from 200 metres. A fine one counts from 25, or a dot and a half.
+    near = SimpleNamespace(pixels_per_km=100.0)
+    assert maps._meets(near, fine=True) == 2.5
+    assert maps._meets(near, fine=False) == 20.0
+    far = SimpleNamespace(pixels_per_km=2.0)
+    assert maps._meets(far, fine=True) == 1.5
+    assert maps._meets(far, fine=False) == 1.5
 
 
 def test_there_is_no_cut_when_the_shore_has_no_outline(result):
@@ -466,7 +520,7 @@ class _Service:
             return _boundaries(numbers)
         places = [
             _place(LEWISHAM, "Lewisham", -0.06, 51.39, 0.07),
-            _place(GREENWICH, "Greenwich", 0.0, 51.39, 0.07),
+            _place(GREENWICH, "Greenwich", 0.01, 51.39, 0.07),
             _place(HARTLEPOOL, "Hartlepool", 5.0, 54.0, 0.07),
             *(_place(*place) for place in self._more),
         ]
@@ -569,6 +623,8 @@ def test_places_on_a_fine_map_come_in_fine_detail_and_stop_at_the_shore(result):
     # the neighbourhoods are drawn no further than its outline.
     assert boundaries["focus"] == [LEWISHAM]
     assert boundaries["shore"] == [LEWISHAM]
+    # The picture needs to know which outlines sit on the line round a place.
+    assert boundaries["fine"] == sorted([LEWISHAM, GREENWICH])
 
 
 def test_a_neighbour_keeps_its_rough_outline_when_the_fine_one_does_not_come(result):
@@ -621,7 +677,11 @@ def test_map_is_drawn_with_what_it_fetches(result):
         svg = render_map(result)
     assert len(_paths(svg)) == AREAS
     assert len(_paths(svg, "land")) == 2
-    assert len(_paths(svg, "outline")) == 1
+    # Lewisham came fine and stops at the shore: a thin line all round it,
+    # and a dark one where Greenwich is beside it.
+    assert len(_paths(svg, "shoreline")) == 1
+    (dark,) = _paths(svg, "outline")
+    assert not dark.get("d").endswith("Z")
     assert _texts(svg, "held") == ["Lewisham"]
     assert _texts(svg, "near") == ["Greenwich"]
 

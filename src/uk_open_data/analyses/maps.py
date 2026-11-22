@@ -95,7 +95,8 @@ _RAMPS = (
     ),
 )
 # land and border are the places around the map; outline is the line round a
-# place whose neighbourhoods are shaded.
+# place whose neighbourhoods are shaded, and shoreline is that line where no
+# other place is beside it.
 _LIGHT = {
     "surface": "#ffffff",
     "ink": "#0b0b0b",
@@ -105,6 +106,7 @@ _LIGHT = {
     "border": "#b9bdc4",
     "frame": "#d6d4cc",
     "outline": "#3d3c39",
+    "shoreline": "#8a8f98",
 }
 _DARK = {
     "surface": "#1a1a19",
@@ -115,6 +117,7 @@ _DARK = {
     "border": "#4a4c51",
     "frame": "#3b3a37",
     "outline": "#e3e2dc",
+    "shoreline": "#7d828b",
 }
 
 _MARGIN = 16
@@ -122,6 +125,13 @@ _FONT = "Arial, Helvetica, sans-serif"
 # The frame leaves this share of the shaded areas' size free on each side,
 # and is never flatter or taller than these heights.
 _ROOM = 0.08
+# The line round a place is dark where another place's land is within this
+# many dots, or this far on the ground when that is more. The second distance
+# is for a neighbour whose outline is simplified to 200 metres, which does
+# not sit on the line.
+_MEETS_DOTS = 1.5
+_MEETS_KM = 0.025
+_MEETS_ROUGH_KM = 0.2
 # A part of a place smaller than this share of its largest part is a speck:
 # a rock or a bank off the shore. It does not set the frame or move a name.
 _SPECK = 0.001
@@ -196,8 +206,9 @@ def load_map_boundaries(result: AnalysisResult, fine: bool = True) -> dict[str, 
     Returns:
         A GeoJSON FeatureCollection of the areas. It also holds
         ``"surroundings"``, the outlines of the places around,
-        ``"focus"``, the codes of those that hold the areas, and
-        ``"shore"``, the codes of those the areas are drawn inside.
+        ``"focus"``, the codes of those that hold the areas,
+        ``"shore"``, the codes of those the areas are drawn inside, and
+        ``"fine"``, the codes of those whose outlines came in fine detail.
 
     Raises:
         ValueError: If the result has no map.
@@ -221,6 +232,7 @@ def load_map_boundaries(result: AnalysisResult, fine: bool = True) -> dict[str, 
         "surroundings": around,
         "focus": focus,
         "shore": focus if focus and set(focus) <= fine_around else [],
+        "fine": sorted(fine_around),
     }
 
 
@@ -497,7 +509,7 @@ def render_map(
         f"<g{inside}>",
         *(_area_path(rings, row, chosen) for row, rings in areas.values()),
         "</g>",
-        *(_ring_path(place.rings, "outline") for place in around if place.focus),
+        *_lines_round(around, _codes(geojson, "shore") if land else set(), view),
         *(_name_text(name) for name in _around_names(around, view, names)),
         *(_name_text(name) for name in names),
         "</g>",
@@ -737,12 +749,15 @@ def _thinned(ring: _Ring) -> _Ring:
 class _Place:
     """A place around the map.
 
-    ``focus`` is true when the place holds the shaded areas.
+    ``focus`` is true when the place holds the shaded areas. ``fine`` is true
+    when its outline is known to be in fine detail.
     """
 
     name: str
     rings: list[_Ring]
     focus: bool
+    code: str = ""
+    fine: bool = False
 
 
 @dataclass(frozen=True)
@@ -761,7 +776,8 @@ def _around(geojson: dict[str, Any], shaded: set[str], view: _View) -> list[_Pla
 
     They are every outline given for a place that the result does not shade.
     """
-    focus = {str(code) for code in geojson.get("focus", [])}
+    focus = _codes(geojson, "focus")
+    fine = _codes(geojson, "fine")
     features = [*geojson.get("features", []), *geojson.get("surroundings", [])]
     places = []
     for feature in features:
@@ -770,8 +786,14 @@ def _around(geojson: dict[str, Any], shaded: set[str], view: _View) -> list[_Pla
         rings = view.cut(view.rings(list(_rings(feature.get("geometry") or {}))))
         if code in shaded or not rings or not view.shows(rings):
             continue
-        places.append(_Place(_property(properties, "NM"), rings, code in focus))
+        name = _property(properties, "NM")
+        places.append(_Place(name, rings, code in focus, code, code in fine))
     return places
+
+
+def _codes(geojson: dict[str, Any], key: str) -> set[str]:
+    """The codes listed under a key of the boundaries."""
+    return {str(code) for code in geojson.get(key, [])}
 
 
 def _shore(geojson: dict[str, Any], shaded: set[str]) -> list[list[Any]]:
@@ -862,6 +884,8 @@ def _style(layer: MapLayer, position: int) -> str:
             "stroke-width:0.8}"
             f"{scope} .outline{{fill:none;stroke:{theme['outline']};"
             "stroke-width:1.2}"
+            f"{scope} .shoreline{{fill:none;stroke:{theme['shoreline']};"
+            "stroke-width:0.8}"
             f"{scope} .frame{{fill:none;stroke:{theme['frame']}}}"
             f"{scope} .rule{{fill:none;stroke:{theme['ink']};stroke-width:1.2}}"
             f"{scope} .key{{stroke:{theme['border']};stroke-width:0.5}}"
@@ -966,6 +990,120 @@ def _d(rings: list[_Ring]) -> str:
     return " ".join(
         "M " + " L ".join(f"{x:.1f} {y:.1f}" for x, y in ring) + " Z" for ring in rings
     )
+
+
+def _lines_round(around: list[_Place], shore: set[str], view: _View) -> list[str]:
+    """Draw the line round each place that holds the shaded areas.
+
+    The line is dark. Round a place whose outline stops at the shore it is
+    dark only where another place's land is beside it, and thin and grey
+    along the water. So a tidal river that runs through a place is two thin
+    banks, and does not read as a border that splits the place in two.
+    """
+    lines = []
+    for place in around:
+        if not place.focus:
+            continue
+        if place.code not in shore:
+            lines.append(_ring_path(place.rings, "outline"))
+            continue
+        lines.append(_ring_path(place.rings, "shoreline"))
+        beside = _beside_land(place, around, view)
+        if beside:
+            lines.append(f'<path class="outline" d="{beside}"/>')
+    return lines
+
+
+def _beside_land(place: _Place, around: list[_Place], view: _View) -> str:
+    """Write the parts of a place's outline that have other land beside them.
+
+    A stretch of the outline has land beside it when the edge of another
+    place is within the meeting distance all the way along it. Each run of
+    such stretches is one open line.
+    """
+    others = [other for other in around if other is not place]
+    near = [
+        _Meeting(
+            [ring for other in others if other.fine is fine for ring in other.rings],
+            _meets(view, fine),
+        )
+        for fine in (True, False)
+    ]
+    step = _meets(view, fine=True)
+    runs: list[str] = []
+    for ring in place.rings:
+        run: list[tuple[float, float]] = []
+        for start, end in zip(ring, ring[1:], strict=False):
+            if all(
+                any(meeting.holds(point) for meeting in near)
+                for point in _along(start, end, step)
+            ):
+                run = [*(run or [start]), end]
+                continue
+            runs.extend(_open_line(run))
+            run = []
+        runs.extend(_open_line(run))
+    return " ".join(runs)
+
+
+def _along(
+    start: tuple[float, float], end: tuple[float, float], step: float
+) -> Iterator[tuple[float, float]]:
+    """Give points along a stretch of a line, its ends among them.
+
+    A long straight stretch can have land at both ends and water between.
+    """
+    steps = max(1, math.ceil(math.hypot(end[0] - start[0], end[1] - start[1]) / step))
+    for part in range(steps + 1):
+        yield (
+            start[0] + (end[0] - start[0]) * part / steps,
+            start[1] + (end[1] - start[1]) * part / steps,
+        )
+
+
+def _meets(view: _View, fine: bool) -> float:
+    """How close, in dots, another place's edge is when it is beside a line."""
+    km = _MEETS_KM if fine else _MEETS_ROUGH_KM
+    return max(_MEETS_DOTS, km * view.pixels_per_km)
+
+
+def _open_line(points: list[tuple[float, float]]) -> list[str]:
+    """Write a run of points as a line that is not closed, if it is a line."""
+    if len(points) < 2:
+        return []
+    return ["M " + " L ".join(f"{x:.1f} {y:.1f}" for x, y in points)]
+
+
+class _Meeting:
+    """Where the edge of one place runs, for asking what is close to it.
+
+    The edge is marked on a grid of squares as wide as the meeting distance.
+    A point is close when its square, or one beside it, is marked. That is
+    true of every point within the distance and of none beyond three times
+    it, which is near enough for a line a dot or two wide.
+    """
+
+    def __init__(self, rings: list[_Ring], reach: float) -> None:
+        self._reach = reach
+        self._marked: set[tuple[int, int]] = set()
+        for ring in rings:
+            for start, end in zip(ring, ring[1:], strict=False):
+                self._mark(start, end)
+
+    def _mark(self, start: tuple[float, float], end: tuple[float, float]) -> None:
+        """Mark the squares along one stretch of the edge."""
+        for x, y in _along(start, end, self._reach / 4):
+            self._marked.add((int(x // self._reach), int(y // self._reach)))
+
+    def holds(self, point: tuple[float, float]) -> bool:
+        """Say whether a point is close to the edge."""
+        column = int(point[0] // self._reach)
+        row = int(point[1] // self._reach)
+        return any(
+            (column + across, row + down) in self._marked
+            for across in (-1, 0, 1)
+            for down in (-1, 0, 1)
+        )
 
 
 def _ring_path(rings: list[_Ring], css_class: str) -> str:

@@ -239,6 +239,16 @@ shore. A part of a place with less than a thousandth of the area of its
 largest part does not set the frame or move a name, so the place stays in the
 middle of the picture. Such a part is still drawn when the frame shows it.
 
+The darker line round a place listed under `"shore"` is dark only where
+another place's land is beside it. Along water it is a thin grey line, so a
+tidal river that runs through a place is two thin banks and does not read as
+a border that splits the place. Land is beside the line when the edge of
+another place is within a dot and a half of it, or 25 metres on the ground
+when that is more. Codes listed under `"fine"` are the places whose outlines
+are in fine detail. A place that is not listed is taken to be simplified to
+200 metres, which does not sit on the line, so it counts from 200 metres. A
+place that is not listed under `"shore"` keeps a dark line all round.
+
 ```python
 boundaries = {
     "type": "FeatureCollection",
@@ -246,6 +256,7 @@ boundaries = {
     "surroundings": nearby,
     "focus": ["E09000023"],
     "shore": ["E09000023"],
+    "fine": ["E09000023", "E09000011"],
 }
 svg = render_map(result, boundaries=boundaries)
 ```
@@ -270,7 +281,8 @@ outlines of neighbourhoods that are open run out to low water and to the
 middle of a river. So on a map of neighbourhoods the local authorities that
 hold them are also listed under `"shore"`, and a river or a bay is left
 clear. When the fine outline of one of them does not come, nothing is listed
-and the neighbourhoods are drawn whole.
+and the neighbourhoods are drawn whole. The places whose fine outlines did
+come are listed under `"fine"`.
 
 A map of more areas is drawn small and takes outlines simplified to 200
 metres. Every map asks for every local authority at 200 metres, nearly three
