@@ -648,17 +648,12 @@ def download_residents(characteristic: str = ETHNIC_GROUP.id) -> Path:
     chosen = _known(characteristic)
     clear_residents_cache()
     fetched = _fetch_residents(chosen.id)
-    content = {
-        "characteristic": chosen.id,
-        "dataset": chosen.dataset,
-        "groups": list(chosen.keys),
-        "residents": [
-            [code, fetched.names[code], list(counts)]
-            for code, counts in fetched.counts.items()
-        ],
-    }
+    residents = (
+        (code, fetched.names[code], dict(zip(chosen.keys, counts, strict=True)))
+        for code, counts in fetched.counts.items()
+    )
     note = f"fetched from Nomis on {date.today().isoformat()}."
-    return write_kept(RESIDENTS_FOLDER, chosen.id, RESIDENTS_FILE_FORMAT, note, content)
+    return keep_residents(chosen.id, residents, note)
 
 
 def clear_residents_cache() -> None:
