@@ -733,4 +733,7 @@ def test_command_line_saves_the_map(tmp_path, capsys):
         assert main([*args, "--map-layer", "people"]) == EXIT_OK
         assert "kindtech-map-people" in picture.read_text(encoding="utf-8")
         assert main([*args, "--map-layer", "income"]) == EXIT_INPUT_ERROR
-    assert "no layer called 'income'" in capsys.readouterr().err
+    shown = capsys.readouterr().err
+    assert "The map has no layer of that name" in shown
+    # The layer typed is not said back.
+    assert "income" not in shown

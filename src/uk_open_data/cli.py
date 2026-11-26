@@ -279,7 +279,17 @@ def _write_map(result: AnalysisResult, layer: str | None, path: Path) -> bool:
 
     Fetching can be slow, so the command says first that it is fetching. That
     goes to standard error, which leaves the report as it is.
+
+    Raises:
+        ValueError: If the result has no map, or its map has no layer called
+            ``layer``. Both are checked before anything is fetched.
     """
+    if result.map is None:
+        raise ValueError("This result has no map.")
+    known = [item.id for item in result.map.layers]
+    if layer is not None and layer not in known:
+        msg = f"The map has no layer of that name. Its layers are: {', '.join(known)}."
+        raise ValueError(msg)
     sys.stderr.write(MAP_BEING_FETCHED + "\n")
     sys.stderr.flush()
     quiet = logging.NullHandler()
@@ -293,7 +303,11 @@ def _write_map(result: AnalysisResult, layer: str | None, path: Path) -> bool:
         outlines_log.removeHandler(quiet)
     if not boundaries["features"]:
         return False
-    svg = render_map(result, layer=layer, boundaries=boundaries)
+    try:
+        svg = render_map(result, layer=layer, boundaries=boundaries)
+    except ValueError:
+        # No outline that came matches an area in the result.
+        return False
     path.write_text(svg + "\n", encoding="utf-8")
     return True
 
