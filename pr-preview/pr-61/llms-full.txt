@@ -20,7 +20,7 @@ Run a real notebook in your browser. Each one fetches live ONS data through the 
 
     Browse and load datasets straight from the NOMIS API.
 
-    [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/ons_statistics.py)
+    [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/ons_statistics.py)
 
 -   __Geographic boundaries__
 
@@ -28,7 +28,7 @@ Run a real notebook in your browser. Each one fetches live ONS data through the 
 
     Explore LAD, LSOA and other UK boundary data interactively.
 
-    [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/geo_boundaries.py)
+    [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/geo_boundaries.py)
 
 -   __Boundaries + statistics__
 
@@ -36,16 +36,16 @@ Run a real notebook in your browser. Each one fetches live ONS data through the 
 
     Join geographic shapes with ONS data and map the result.
 
-    [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/geo_plus_ons.py)
+    [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/geo_plus_ons.py)
 
 </div>
 
 ## Install
 
-Install [KindTech from PyPI](https://pypi.org/project/kindtech/):
+Install [uk-open-data from PyPI](https://pypi.org/project/uk-open-data/):
 
 ```bash
-uv add kindtech
+uv add uk-open-data
 ```
 
 KindTech depends on requests, narwhals, and python-calamine. You bring your own
@@ -55,11 +55,11 @@ which subpackages are included and how they are released.
 ## Quick start
 
 ```python
-from kindtech import load_geodata, load_ons, geodata_to_properties
+from uk_open_data import load_geodata, load_ons, geodata_to_properties
 import pandas as pd  # or polars
 
 # Load LAD boundaries (GeoJSON) and extract properties
-geojson = load_geodata(geography_type="LAD")
+geojson = load_geodata(geography_type="LAD", year="2024")
 geo_df = pd.DataFrame(geodata_to_properties(geojson, "LAD", 2024))
 
 # Load ONS statistics — columns are normalised automatically
@@ -75,14 +75,14 @@ KindTech uses [narwhals](https://narwhals-dev.github.io/narwhals/) for universal
 
 ```python
 # With pandas installed → returns pd.DataFrame
-from kindtech.ons import load_ons
+from uk_open_data.ons import load_ons
 df = load_ons("NM_1_1")
 type(df)  # <class 'pandas.core.frame.DataFrame'>
 ```
 
 ```python
 # With polars installed → returns pl.DataFrame
-from kindtech.ons import load_ons
+from uk_open_data.ons import load_ons
 df = load_ons("NM_1_1")
 type(df)  # <class 'polars.dataframe.frame.DataFrame'>
 ```
@@ -122,7 +122,7 @@ run locally with `uv run marimo edit examples/<notebook>.py`.
 
     Browse and load datasets straight from the NOMIS API.
 
-    [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/ons_statistics.py)
+    [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/ons_statistics.py)
 
 -   __Geographic boundaries__
 
@@ -130,7 +130,7 @@ run locally with `uv run marimo edit examples/<notebook>.py`.
 
     Explore LAD, LSOA and other UK boundary data interactively.
 
-    [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/geo_boundaries.py)
+    [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/geo_boundaries.py)
 
 -   __Boundaries + statistics__
 
@@ -138,7 +138,7 @@ run locally with `uv run marimo edit examples/<notebook>.py`.
 
     Join geographic shapes with ONS data and map the result.
 
-    [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/geo_plus_ons.py)
+    [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/geo_plus_ons.py)
 
 </div>
 
@@ -150,11 +150,11 @@ projects, each chaining several connectors on `geography_code`. See the
 
 | Notebook | Case study |
 |----------|------------|
-| [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/smart_works_unemployment.py) | **Smart Works** — women's unemployment vs service reach (Census 2021 + LAD boundaries) |
-| [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/cal_vulnerable_client.py) | **Citizens Advice Lewisham** — deprivation vs service usage (postcodes + IMD + LSOA boundaries) |
-| [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/sobus_bame_referrals.py) | **Sobus** — BAME mental-health referrals in Hammersmith & Fulham (outcodes + Census ethnicity) |
-| [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/starlight_play_provision.py) | **Starlight** — hospital play provision vs need across ICBs |
-| [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/material_focus_recycling.py) | **Material Focus** — travel time to the nearest recycling point (LAD boundaries + population) |
+| [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/smart_works_unemployment.py) | **Smart Works** — women's unemployment vs service reach (Census 2021 + LAD boundaries) |
+| [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/cal_vulnerable_client.py) | **Citizens Advice Lewisham** — deprivation vs service usage (postcodes + IMD + LSOA boundaries) |
+| [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/sobus_bame_referrals.py) | **Sobus** — BAME mental-health referrals in Hammersmith & Fulham (outcodes + Census ethnicity) |
+| [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/starlight_play_provision.py) | **Starlight** — hospital play provision vs need across ICBs |
+| [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/material_focus_recycling.py) | **Material Focus** — travel time to the nearest recycling point (LAD boundaries + population) |
 
 
 # Case Studies
@@ -174,11 +174,11 @@ locally with `uv run marimo edit examples/<notebook>.py`.
 
 | Case study | What it shows | Run |
 |---|---|---|
-| [Smart Works](smart-works-woman-unemployment.md) | Women's unemployment vs service reach (Census 2021 + LAD boundaries) | [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/smart_works_unemployment.py) |
-| [Citizens Advice Lewisham](cal-vulnerable-client.md) | Deprivation vs service usage (postcodes + IMD + LSOA boundaries) | [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/cal_vulnerable_client.py) |
-| [Sobus](sobus-bame-analysis.md) | BAME mental-health referrals in Hammersmith & Fulham (outcodes + Census ethnicity) | [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/sobus_bame_referrals.py) |
-| [Starlight](starlight-children-mapping.md) | Hospital play provision vs need across ICBs | [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/starlight_play_provision.py) |
-| [Material Focus](material-focus-recycling.md) | Travel time to the nearest recycling point (LAD boundaries + population) | [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/material_focus_recycling.py) |
+| [Smart Works](smart-works-woman-unemployment.md) | Women's unemployment vs service reach (Census 2021 + LAD boundaries) | [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/smart_works_unemployment.py) |
+| [Citizens Advice Lewisham](cal-vulnerable-client.md) | Deprivation vs service usage (postcodes + IMD + LSOA boundaries) | [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/cal_vulnerable_client.py) |
+| [Sobus](sobus-bame-analysis.md) | BAME mental-health referrals in Hammersmith & Fulham (outcodes + Census ethnicity) | [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/sobus_bame_referrals.py) |
+| [Starlight](starlight-children-mapping.md) | Hospital play provision vs need across ICBs | [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/starlight_play_provision.py) |
+| [Material Focus](material-focus-recycling.md) | Travel time to the nearest recycling point (LAD boundaries + population) | [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/material_focus_recycling.py) |
 
 ## How each study is structured
 
@@ -191,7 +191,7 @@ locally with `uv run marimo edit examples/<notebook>.py`.
 ## Have a case study to share?
 
 Using KindTech in your own work? We'd love to feature it — open an issue or PR
-on the [GitHub repository](https://github.com/KindTechUK/kindtech).
+on the [GitHub repository](https://github.com/KindTechUK/uk-open-data).
 
 
 ## CAL Vulnerable Client Analysis
@@ -256,16 +256,16 @@ Citizens Advice Lewisham (CAL) needed to identify 'vulnerability hotspots' - are
 ### Reproduction
 
 A runnable, end-to-end reproduction lives in
-[`examples/cal_vulnerable_client.py`](https://github.com/KindTechUK/kindtech/blob/main/examples/cal_vulnerable_client.py)
+[`examples/cal_vulnerable_client.py`](https://github.com/KindTechUK/uk-open-data/blob/main/examples/cal_vulnerable_client.py)
 (a [marimo](https://marimo.io/) notebook). It chains three KindTech connectors,
 all joining on the 2021 LSOA `geography_code`:
 
-[![Open in marimo](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/cal_vulnerable_client.py)
+[![Open in marimo](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/cal_vulnerable_client.py)
 &nbsp;— run it live in the browser (the molab cloud runtime fetches real ONS
 data), or locally with `uv run marimo edit examples/cal_vulnerable_client.py`.
 
 ```python
-from kindtech import postcodes_to_geography, load_imd, load_geodata
+from uk_open_data import postcodes_to_geography, load_imd, load_geodata
 
 # 1. Client postcodes -> LSOA (the step real client data would use)
 clients = postcodes_to_geography(client_postcodes, geography_type="LSOA")
@@ -379,16 +379,16 @@ Or
 ### Reproduction
 
 A runnable, end-to-end reproduction lives in
-[`examples/material_focus_recycling.py`](https://github.com/KindTechUK/kindtech/blob/main/examples/material_focus_recycling.py)
+[`examples/material_focus_recycling.py`](https://github.com/KindTechUK/uk-open-data/blob/main/examples/material_focus_recycling.py)
 (a [marimo](https://marimo.io/) notebook). It builds the headline travel-time
 map from two KindTech connectors, joining on `geography_code`:
 
-[![Open in marimo](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/material_focus_recycling.py)
+[![Open in marimo](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/material_focus_recycling.py)
 &nbsp;— run it live in the browser (the molab cloud runtime fetches real ONS
 data), or locally with `uv run marimo edit examples/material_focus_recycling.py`.
 
 ```python
-from kindtech import load_geodata, geodata_to_properties, load_ons
+from uk_open_data import load_geodata, geodata_to_properties, load_ons
 import pandas as pd
 
 # LAD boundaries carry LAT/LONG centroids
@@ -412,7 +412,7 @@ one.
     statistic well, but it is not a true drive-time. A faithful road travel-time
     map needs a **routing engine** (e.g. [OSRM](https://project-osrm.org/) or
     [OpenRouteService](https://openrouteservice.org/)); KindTech does not wrap
-    one yet. If more case studies need real travel time, a small `kindtech`
+    one yet. If more case studies need real travel time, a small `uk_open_data`
     routing connector would be worth adding.
 
 **Travel-time map** — minutes to the nearest recycling point per LAD:
@@ -534,17 +534,17 @@ Smart Works needed to identify gaps in their service provision and optimize thei
 ### Reproduction
 
 A runnable, end-to-end reproduction lives in
-[`examples/smart_works_unemployment.py`](https://github.com/KindTechUK/kindtech/blob/main/examples/smart_works_unemployment.py)
+[`examples/smart_works_unemployment.py`](https://github.com/KindTechUK/uk-open-data/blob/main/examples/smart_works_unemployment.py)
 (a [marimo](https://marimo.io/) notebook). It uses only the public KindTech
 API plus a deterministic synthetic client list (the real client records are
 private):
 
-[![Open in marimo](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/smart_works_unemployment.py)
+[![Open in marimo](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/smart_works_unemployment.py)
 &nbsp;— run it live in the browser (the molab cloud runtime fetches real ONS
 data), or locally with `uv run marimo edit examples/smart_works_unemployment.py`.
 
 ```python
-from kindtech import geodata_to_properties, load_geodata, load_ons
+from uk_open_data import geodata_to_properties, load_geodata, load_ons
 
 # Female, unemployed, by age band, all LADs — Census 2021 table RM024
 unemp = load_ons(
@@ -666,16 +666,16 @@ The project successfully obtained data from multiple sources to provide a compre
 ### Reproduction
 
 A runnable, end-to-end reproduction lives in
-[`examples/sobus_bame_referrals.py`](https://github.com/KindTechUK/kindtech/blob/main/examples/sobus_bame_referrals.py)
+[`examples/sobus_bame_referrals.py`](https://github.com/KindTechUK/uk-open-data/blob/main/examples/sobus_bame_referrals.py)
 (a [marimo](https://marimo.io/) notebook). It chains three KindTech connectors,
 all joining on the 2021 LSOA `geography_code`:
 
-[![Open in marimo](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/sobus_bame_referrals.py)
+[![Open in marimo](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/sobus_bame_referrals.py)
 &nbsp;— run it live in the browser (the molab cloud runtime fetches real ONS
 data), or locally with `uv run marimo edit examples/sobus_bame_referrals.py`.
 
 ```python
-from kindtech import outcode_to_geography, load_ons, load_geodata
+from uk_open_data import outcode_to_geography, load_ons, load_geodata
 
 # 1. A referral's outcode -> LSOA (the step real referral data would use)
 outcode_to_geography(["W6", "W12", "W14"], geography_type="LSOA")
@@ -822,16 +822,16 @@ Starlight Children's Foundation needed to understand where there is overlap betw
 ### Reproduction
 
 A runnable, end-to-end reproduction lives in
-[`examples/starlight_play_provision.py`](https://github.com/KindTechUK/kindtech/blob/main/examples/starlight_play_provision.py)
+[`examples/starlight_play_provision.py`](https://github.com/KindTechUK/uk-open-data/blob/main/examples/starlight_play_provision.py)
 (a [marimo](https://marimo.io/) notebook). It maps synthetic provision against
 need over England's real NHS commissioning geography:
 
-[![Open in marimo](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/starlight_play_provision.py)
+[![Open in marimo](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/starlight_play_provision.py)
 &nbsp;— run it live in the browser (the molab cloud runtime fetches real ONS
 data), or locally with `uv run marimo edit examples/starlight_play_provision.py`.
 
 ```python
-from kindtech import load_geodata, geodata_to_properties
+from uk_open_data import load_geodata, geodata_to_properties
 import pandas as pd
 
 # England's 42 Integrated Care Boards (the geography that replaced CCGs)
@@ -891,46 +891,47 @@ maths and maps are unchanged.
 
 # API Reference
 
-KindTech provides four modules for accessing UK public data:
+KindTech provides four modules for accessing UK public data, and analyses that
+put them to work on your own data:
 
 ## Modules
 
-### [Geographic Data](geo.md) — `kindtech.geo`
+### [Geographic Data](geo.md) — `uk_open_data.geo`
 
 Load UK geographic boundary data from the ONS ArcGIS Geoportal. Returns GeoJSON.
 
 ```python
-from kindtech.geo import load_geodata
+from uk_open_data.geo import load_geodata
 
 # Load Local Authority Districts
 boundaries = load_geodata(geography_type="LAD", coverage="UK")
 ```
 
-### [ONS Statistics](ons.md) — `kindtech.ons`
+### [ONS Statistics](ons.md) — `uk_open_data.ons`
 
 Load statistical data from the ONS NOMIS API. Returns pandas or polars DataFrames.
 
 ```python
-from kindtech.ons import load_ons
+from uk_open_data.ons import load_ons
 
 # Load Jobseeker's Allowance data
 df = load_ons("NM_1_1", geography="TYPE480", time="latest")
 ```
 
-### [Postcodes](postcodes.md) — `kindtech.postcodes`
+### [Postcodes](postcodes.md) — `uk_open_data.postcodes`
 
 Resolve UK postcodes (and outcodes) to ONS geography codes via postcodes.io, so
 address data joins to boundaries and statistics. Returns pandas or polars
 DataFrames.
 
 ```python
-from kindtech.postcodes import postcodes_to_geography
+from uk_open_data.postcodes import postcodes_to_geography
 
 # Postcodes -> LSOA, ready to join on `geography_code`
 located = postcodes_to_geography(["SE13 7HX", "SE6 4RU"], geography_type="LSOA")
 ```
 
-### [Deprivation (IMD)](imd.md) — `kindtech.imd`
+### [Deprivation (IMD)](imd.md) — `uk_open_data.imd`
 
 Load UK Indices of Multiple Deprivation, keyed on geography codes. A single
 nation returns its **official** index (England IoD 2025/2019 with all domains,
@@ -938,9 +939,23 @@ or WIMD/SIMD/NIMDM); `nation="UK"` returns the mySociety composite for
 cross-nation comparison. Returns pandas or polars DataFrames.
 
 ```python
-from kindtech.imd import load_imd
+from uk_open_data.imd import load_imd
 
 imd = load_imd(nation="England")  # official IoD 2025; join on `geography_code`
+```
+
+### [Analyses](analyses.md) — `uk_open_data.analyses`
+
+Ask a question of your own data. An analysis joins your table to open data and
+returns figures with their sources, the working, the choices made and the
+checks a person should do. Results hold totals only, never rows.
+
+```python
+from uk_open_data.analyses import run_analysis
+
+result = run_analysis(
+    "reach-deprivation", clients, columns={"postcode": "Client postcode"}
+)
 ```
 
 ## Design principles
@@ -952,12 +967,1567 @@ imd = load_imd(nation="England")  # official IoD 2025; join on `geography_code`
 - **Live data** — actual geographic/statistical data is always fetched fresh from the source APIs
 
 
+## Analyses
+
+# Analyses
+
+An analysis answers one question a charity asks of its own data. You give it a
+table, say which column is which, and it joins your data to UK open data and
+returns figures you can check and reuse.
+
+Kindtech Evidence is built on these analyses. This page is about running them
+from Python. You can also run them from the [command line](cli.md), or from a
+chat assistant through the [connector](connector.md).
+
+These analyses follow work first done by
+[DataKind UK](https://www.datakind.org.uk/) volunteers with charities. The
+[case studies](../case-studies/index.md) reproduce five of those projects.
+
+Every analysis returns the same things:
+
+- **an answer**: one or two sentences that answer the question, and the
+  three figures to show first
+- **figures**: the headline numbers
+- **tables**: totals behind the figures
+- **a map description**: which areas to draw and what to colour them by, when
+  the analysis has a map
+- **chart descriptions**: which table and columns to draw as a bar chart
+- **the working**: each step taken, with how many rows went in and came out,
+  the figures before rounding and the code that runs it again
+- **choices**: what the analysis decided for you, and the option that changes it
+- **checks**: what a person must confirm before using the figures
+- **caveats**: what the figures cannot say
+- **sources**: publisher, edition, licence and link for every dataset used
+- **a privacy summary**: what was hidden, and what left your machine
+
+A result holds totals only. Nothing in it describes one person, and no value
+from your data is repeated back, not even in a warning or an error message.
+
+## Quick start
+
+```python
+import pandas as pd
+from uk_open_data.analyses import run_analysis
+
+clients = pd.read_csv("clients.csv")
+
+result = run_analysis(
+    "reach-deprivation",
+    clients,
+    columns={"postcode": "Client postcode"},
+)
+
+result.answer                                   # the question, answered in a sentence
+result.figure("share_most_deprived_20").value   # 41.3 (per cent)
+result.table("by_decile").to_frame()            # pandas or polars DataFrame
+[check.question for check in result.checks]     # what to confirm first
+result.to_dict()                                # everything, as plain JSON types
+```
+
+`data` can be a pandas or polars DataFrame, or a list of row dictionaries.
+`columns` maps each role the analysis needs to one of your column names. You can
+leave a role out when your data already has a column with that name.
+
+To run an analysis on a file without writing Python, use the
+[command line](cli.md).
+
+## Functions
+
+### `list_analyses()`
+
+Returns an `AnalysisInfo` for every analysis: its `id`, `title`, the `question` it
+answers, a `summary`, its `roles` (the columns it can use), its `input_modes`
+(the shapes of data it accepts), its `options` and its `coverage`.
+
+Every option has two names. `name` is its code name, the one a call is
+written with, such as `catchment`. `label` is its short plain name, such as
+"Area you serve". Show the label beside the option. Every message that points a
+person at an option uses the label, in quotes ("Change 'Area you serve' to
+include them."), and never the code name, so the sentence matches what is on
+the screen. An option has the same label in every analysis that has it, and
+the result's `choices` use the same label for the choice it made:
+
+| `name` | `label` |
+| --- | --- |
+| `catchment` | Area you serve |
+| `catchment_min_share` | Share that makes a place part of your area |
+| `suppress_below` | Smallest count shown |
+| `postcode_lookup` | Where postcodes are looked up |
+| `need` | People you are trying to reach |
+| `top` | Places listed |
+| `characteristic` | What people are grouped by |
+| `groups` | How your labels match census groups |
+| `under_represented_below` | What counts as under-represented |
+| `within_km` | Distance within reach, in kilometres |
+
+The area an analysis looks across has one name wherever a person reads it:
+"the area you serve". `catchment` is only its code name.
+
+A table's columns have plain names too. `table.columns` holds the ids, which a
+program reads, and `table.headings` maps each id to the heading to show, such
+as "Your people per 100 in need" for `people_per_100_in_need`. `table.units`
+gives the unit of each column that has one, named as the units of figures
+are: `"percent"` or `"km"`. Show a table with its headings and units and it
+reads the same on a page, in a chat and on the command line. A place is a
+"Local authority" in most tables and a "Neighbourhood" in the one behind the
+first analysis's map.
+
+An option that takes one of a fixed list of values lists them as `choices`,
+each with a `value` and a `label` a person can read, so a page can show a list
+to pick from. `choices` is empty when the option is free, such as a number or
+a place name. For the `need` option the choices are the built-in needs; a table
+of your own is still given as a mapping.
+
+A role with `reported` set to `True` holds names the result uses too, such as
+local authorities, so the same names can appear in the result. Values of every
+other role are never repeated.
+
+A reported role can also list `reported_values`. That is for a column that
+holds a person's own words as well, such as their ethnic group: only the
+listed values are names the result uses, and no other value in the column is
+ever repeated. If you check a result for values repeated from the input, leave
+out the listed values when there are any, compared without case, and check
+every other value in the column. Leave the whole column out only when the
+role is reported and lists no values.
+
+A role with `amount` set to `True` holds a number the analysis adds up: a count of
+people or a volume. A total of it is in the result, so where one row is the
+only one for its place or group, that row's number comes back as the total.
+That is not a repeated value. A number in any other role, such as a latitude,
+never comes back.
+
+### `describe_analysis(analysis_id)`
+
+Returns the `AnalysisInfo` for one analysis. Raises `KeyError` for an unknown id.
+
+### `run_analysis(analysis_id, data, columns=None, options=None)`
+
+Runs an analysis and returns an `AnalysisResult`.
+
+Raises `AnalysisInputError` (a `ValueError`) when the data, the column mapping or
+an option cannot be used. The message is written for a person and
+`error.problems` lists each problem separately.
+
+`error.option` is the code name of the option the error is about, and
+`error.role` the name of the column role, so a page can mark the right box and
+a program need not search the sentence. When the problems are about several,
+it is the first of them. Each is `None` when the error is about neither, for
+example when a source could not be read. The command line adds what to type:
+"On the command line this is --option catchment=VALUE."
+
+When the columns an analysis needs were not all found, `error.role` is the
+first one still to be named. When an option was given that the analysis does
+not have, the message lists each option it does have by both names:
+"need ('People you are trying to reach')".
+
+When a public data source the analysis needs cannot be reached, the
+`requests.RequestException` is let out. Its text holds the whole web address
+that was asked for, which can hold a postcode, so show a message of your own
+rather than the text. The command line names the site alone, and says
+whether the source could not be reached or answered with an error. An analysis
+needs no network when the public figures it uses are kept on your machine.
+
+### `record_run(analysis_id, input_mode, door)`
+
+Records that a run has given a person an answer, so that a host can count how
+often each analysis is used. It writes one record at `INFO` level to the
+`uk_open_data.runs` logger, and that is all it does: the package adds no handler
+and sends nothing anywhere. On a person's own machine nobody collects the
+records. A host that keeps its logs can count them.
+
+```python
+from uk_open_data.analyses import record_run
+
+record_run(result.analysis_id, result.input_mode, "page")
+# run analysis=reach-deprivation mode=postcodes door=page
+```
+
+`run_analysis` never records a run by itself. Whatever gives the answer to a
+person calls `record_run` once, after the answer has been given: the command
+line does (`"cli"`), and a page (`"page"`) or a chat assistant (`"chat"`) built
+on these analyses should. A run that fails is not recorded.
+
+The record holds the three words and nothing else. Each must be on a fixed
+list (a registered analysis, one of its input modes, one of the three doors),
+so no word from a person's data can reach a log. A word that is not on its list
+raises `KeyError` (the analysis) or `ValueError` (the mode or the door), and the
+message does not repeat it. The same three words are on the record as
+`record.analysis_id`, `record.input_mode` and `record.door`.
+
+A host that keeps the records imports the logger's name, and the doors, from
+the package, so neither is typed out a second time:
+
+```python
+import logging
+
+from uk_open_data.analyses import DOORS, RUNS_LOGGER
+
+logging.getLogger(RUNS_LOGGER).setLevel(logging.INFO)
+```
+
+## Drawing the map
+
+A result describes its map; `render_map` draws it as an SVG picture with a
+key and the credits the data licences ask for.
+
+```python
+from uk_open_data.analyses import render_map
+
+svg = render_map(result)                  # the first layer: deprivation decile
+svg = render_map(result, layer="people")  # people reached, in bands
+
+with open("map.svg", "w", encoding="utf-8") as handle:
+    handle.write(svg)
+```
+
+The picture is drawn from the result's own table of totals, so it shows
+nothing the result does not already hold. People are shown in bands, and the
+lowest band includes zero. Hover over an area in a browser to see its name and
+value. The colours adapt to a dark page.
+
+A picture shows one layer, and its title says what the colour shows: "People
+reached, by neighbourhood". The first layer of a map is drawn in blue and the
+second in orange, so two pictures of one result do not look like the same
+measure. The shaded areas sit in a frame with a scale line. Up to twelve
+local authorities are named one by one; neighbourhoods are named by the local
+authority they are in. A name that would cover most of a small place is
+written beside it, where there is room, so its colour can be seen. Text is broken into lines to fit the width you ask for.
+
+The places around the map are drawn in pale grey, with their names where a
+name fits, when you give their outlines. Only the part of each that the frame
+shows is written to the picture, so a large neighbour does not make the file
+large. Put them among the features of
+`boundaries`, or in a list under `"surroundings"`. Codes listed under
+`"focus"` are the surrounding places that hold the shaded areas: each gets a
+darker line and its name. Codes listed under `"shore"` are surrounding places
+whose outline is where the land ends. The shaded areas are drawn no further
+than it, and the picture is framed on it. Use it when the outlines of the
+areas run out over water and the outline of the place that holds them does
+not.
+
+```python
+boundaries = {
+    "type": "FeatureCollection",
+    "features": areas,           # outlines you already have
+    "surroundings": nearby,
+    "focus": ["E09000023"],
+    "shore": ["E09000023"],
+}
+svg = render_map(result, boundaries=boundaries)
+```
+
+`render_map` fetches the outline of each area from the ONS Open Geography
+Portal. Only the public area codes of the area you serve, and of the local
+authorities near it, are sent. To draw without the network, pass `boundaries=`
+a GeoJSON FeatureCollection you already have; `load_map_boundaries(result)`
+fetches one you can save and reuse.
+
+`load_map_boundaries` fetches the places around the map as well, and lists
+under `"focus"` the local authorities that hold a map's neighbourhoods. A map
+of up to 1,000 neighbourhoods or 20 local authorities is drawn large, so its
+outlines come from the full ones with detail finer than 10 or 20 metres left
+out. So do the local authorities that hold its neighbourhoods, and the other
+places a picture of the usual width shows when there are no more than 40 of
+them, so that neighbours meet. A place further off keeps its 200 metre
+outline.
+
+The full outlines of local authorities stop at the shore. The only full
+outlines of neighbourhoods that are open run out to low water and to the
+middle of a river. So on a map of neighbourhoods the local authorities that
+hold them are also listed under `"shore"`, and a river or a bay is left
+clear. When the fine outline of one of them does not come, nothing is listed
+and the neighbourhoods are drawn whole.
+
+A map of more areas is drawn small and takes outlines simplified to 200
+metres. Every map asks for every local authority at 200 metres, nearly three
+megabytes, to find the ones near it. That answer is kept in memory for the
+life of the process, so a second map does not ask again;
+`uk_open_data.analyses.maps.clear_outline_cache()` forgets it. When the places around cannot be fetched, the map is drawn without
+them and nothing is said.
+
+The fine outlines usually come in a few seconds. At times the service has
+taken from a quarter of a minute to a minute or two for one map, and it is
+not known why. A program that cannot wait,
+such as one answering in a chat, calls `load_map_boundaries(result,
+fine=False)`. It then gets the 200 metre outlines of every area, and the
+places around from the answer kept in memory, in a second or two.
+`load_map_boundaries` is safe to call from two threads at once.
+
+## The answer
+
+`result.answer` is one or two sentences that answer the question the analysis
+asks, for example:
+
+> Of your people in the area you serve, 49.0% live in the 20% most deprived
+> neighbourhoods in England. Of everyone who lives in that area, 20.0% do, so
+> you reach those neighbourhoods more than their share.
+
+Open with it wherever you show a result, so a report, a page and a chat
+assistant all say the same thing. It is built from the figures and tables of
+the result, after small counts are hidden, so it says nothing the result does
+not already show. When the figure it rests on is hidden, it says so instead of
+giving a number. The places and groups it names are the public names in the
+result's tables, never text from your data.
+
+The sentence is careful about what it calls a gap. A place is named as one to
+look at first only when it falls below the rate for the whole area, so a list
+of one or two places does not present the place you reach most as a gap, and a
+place whose count is hidden is not named. A count of every resident is called
+"residents", not "people in need". A group with nobody in your data is named
+last, with a line saying so, because it may be a group you do not record.
+
+`result.key_figures` holds the ids of up to three figures to show first, in
+order. Each is a figure of the result, and none is hidden: when a figure that
+would be shown first is hidden to protect a small count, the next one takes
+its place.
+
+```python
+for figure_id in result.key_figures:
+    figure = result.figure(figure_id)
+    print(figure.label, figure.value, figure.unit)
+```
+
+## Checking a result and running it again
+
+A result shows its working, so that anyone can check it or run it again.
+
+`result.working` lists each step in plain words, with how many rows went in
+and came out. `result.sources` gives each source and its date.
+
+A share or a rate is rounded before it is shown. `figure.exact` is the value
+before rounding:
+
+```python
+figure = result.figure("share_most_deprived_20")
+figure.value   # 68.6
+figure.exact   # 68.57142857142857
+```
+
+`exact` is `None` for a count, which is not rounded, and for a figure that is
+hidden to protect a small count. It is also `None` for a distance from one
+place to a site, which is rounded to the kilometre on purpose so that it says
+less about where a site is.
+
+`result.code` is the Python that runs the analysis again with the same
+settings:
+
+```python
+print(result.code)
+```
+
+```python
+# Version 0.1 of this analysis, run with
+# uk-open-data 0.2.0. This runs it again with
+# the same settings. No row or heading of your table is written
+# here: put the name of your own column beside each role.
+import pandas as pd
+
+from uk_open_data.analyses import run_analysis
+
+data = pd.read_csv("your-table.csv")
+result = run_analysis(
+    "reach-deprivation",
+    data,
+    columns={
+        "postcode": "",  # the name of your column
+    },
+    options={
+        "suppress_below": 10,
+        "postcode_lookup": "auto",
+        "catchment_min_share": 0.05,
+    },
+)
+print(result.answer)
+for figure in result.figures:
+    print(figure.label, figure.value)
+```
+
+It prints the answer and every figure, to set beside the ones in the result.
+
+Every setting that has a value is written out, the ones you left alone too,
+so the code gives the same result if a default changes in a later version.
+That is why it can hold a setting the list of choices in a result does not
+mention. A setting the analysis works out for itself, such as the area you
+serve when you named none, is left out. An area you named is written as you
+gave it.
+
+The setting for where postcodes are looked up is written as it was used. Code
+copied from a run that kept postcodes on one machine says so, and on another
+machine it stops and asks for the postcode table before it sends a postcode
+anywhere.
+
+The code holds no row and no heading of your table. The names of your columns
+are left for you to fill in, because a heading can hold something private. A
+setting that holds your own words, such as your own labels for groups in
+`who-we-miss`, is written as `{}` with a note to fill it in. So the code is as
+safe to share as the result is.
+
+The command line prints both as the last two parts of its report, under
+"Figures before rounding" and "To run it again in Python". The code starts at
+the margin, so it runs as it is copied.
+
+## Charts
+
+`result.charts` describes the charts a result is best shown with, so a page
+can draw them without knowing the analysis. Each `Chart` names a table of the
+result, the column that names each group of bars (`category_column`) and one
+or more `series`, each a column with a label and a unit. Every series in a
+chart has the same unit, so one axis serves them all.
+
+```python
+chart = result.charts[0]
+frame = result.table(chart.table).to_frame()
+frame.plot.bar(x=chart.category_column, y=[s.column for s in chart.series])
+```
+
+A value hidden to protect a small count is `None` in the table. Draw no bar
+for it.
+
+## Small counts
+
+A count from 1 to 4 that is about a named place or a group is returned as
+`None`, with `suppressed` set to `True`, and so is anything worked out from it.
+When hiding one cell would let it be worked out from a total, a second cell is
+hidden with it. So a hidden count is not always small: do not report a hidden
+cell as "fewer than 5". Every result says this in its privacy notes. Change
+the threshold with the `suppress_below` option; it cannot go below 3.
+
+A result says which threshold was used in `privacy.suppress_below`. The analyses
+about sites, provision gap and access and distance, hide nothing, and for them
+it is `None`.
+
+## Reach against deprivation
+
+`reach-deprivation` answers: are we reaching people in the most deprived
+neighbourhoods? It covers England, using the English Indices of Deprivation
+2025 on 2021 neighbourhoods (LSOAs).
+
+It accepts two shapes of data:
+
+| Input mode | Columns | What it is |
+| --- | --- | --- |
+| `postcodes` | `postcode` | One row per person or case, with a home postcode |
+| `neighbourhood_counts` | `lsoa_code`, `count` | Already totalled by 2021 LSOA |
+
+In `postcodes` mode the analysis looks postcodes up in the
+[postcode table on your machine](postcodes.md#looking-up-postcodes-on-this-machine)
+when one is installed, and then no postcode is sent anywhere. Install it once
+with `uk-open-data postcodes download`. Without the table, the distinct,
+well-formed postcodes are sent to [postcodes.io](https://postcodes.io/); no
+other column leaves your machine, and rows that are blank or not shaped like a
+postcode are never sent. The result says which happened, under `choices` and
+`privacy`. In `neighbourhood_counts` mode nothing leaves your machine.
+
+The deprivation index is downloaded from gov.uk, or read from a copy
+[kept on your machine](imd.md#keeping-the-english-index-on-this-machine) when
+there is one. A result that used a copy says so in its `sources` and its
+`working`, with the note the copy was kept with.
+
+The analysis then works out **the area you serve**: the local authorities that each
+hold at least 5% of the people it could place. The decile figures and the map
+are about the people who live there, so they can be set against everyone who
+lives there. People outside the area you serve are counted in the local authority
+table, and a warning says how many there are.
+
+| Figure | Meaning |
+| --- | --- |
+| `people_supplied` | People in the data you gave |
+| `people_located` | People placed in an English neighbourhood |
+| `people_in_catchment` | People who live in the area you serve |
+| `share_most_deprived_10` | Share of them in the 10% most deprived neighbourhoods in England |
+| `share_most_deprived_20` | Share of them in the 20% most deprived neighbourhoods in England |
+| `catchment_share_most_deprived_20` | Share of residents of the area you serve who live in those neighbourhoods, for comparison |
+| `reach_per_1000_most_deprived_20` | People reached per 1,000 residents of those neighbourhoods |
+| `reach_per_1000_elsewhere` | People reached per 1,000 residents in the rest of the area you serve |
+
+The chart `people_by_decile` sets the share of your people in each decile
+against the share of residents of the area you serve.
+
+| Table | Rows |
+| --- | --- |
+| `by_decile` | One per deprivation decile: people, share of people, residents, share of residents, people per 1,000 |
+| `by_local_authority` | One per local authority; authorities outside the area you serve with few people share one unnamed row |
+| `by_neighbourhood` | One per neighbourhood in the area you serve: decile, residents, and people in bands. This feeds the map |
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `suppress_below` | `5` | Counts above zero and below this are hidden |
+| `postcode_lookup` | `"auto"` | `"offline"` uses the table on your machine and fails without one, `"online"` uses postcodes.io, `"auto"` uses the table when it is installed |
+| `catchment` | worked out | A local authority name or code, a list of them, or `"England"` |
+| `catchment_min_share` | `0.05` | The share a local authority needs to join a worked-out area |
+
+```python
+result = run_analysis(
+    "reach-deprivation",
+    clients,
+    columns={"postcode": "Client postcode"},
+    options={"catchment": ["Lewisham", "Greenwich"]},
+)
+```
+
+!!! note "Before you use the figures"
+    Read `result.checks` and `result.caveats`. Deprivation is measured for
+    neighbourhoods, not people: someone who lives in a deprived neighbourhood
+    is not necessarily deprived.
+
+## Need against reach
+
+`need-reach` answers: where is need high and our presence low? It covers
+England and Wales, by local authority, and is the method of the
+[Smart Works case study](../case-studies/smart-works-woman-unemployment.md)
+turned into a function.
+
+It accepts two shapes of data:
+
+| Input mode | Columns | What it is |
+| --- | --- | --- |
+| `postcodes` | `postcode` | One row per person or case, with a home postcode |
+| `area_counts` | `local_authority`, `count` | Already totalled by local authority, named or coded |
+
+Postcodes are placed as in the first analysis: on your machine when the postcode
+table is installed, and with postcodes.io otherwise.
+
+The analysis loads a count of **people in need** in every local authority from
+[Nomis](ons.md), divides the people you helped in each one by it, and lists
+the high-need local authorities where you reach the fewest people per 100 in
+need. A local authority is high need when its count is in the top quarter of
+the area you serve. With fewer than four places, the one with the largest count
+is high need.
+
+Choose the need with the `need` option:
+
+| `need` | People counted |
+| --- | --- |
+| `"unemployed"` (default) | Unemployed people aged 16 to 64, not counting full-time students, Census 2021 |
+| `"unemployed_women"` | Unemployed women aged 16 to 64, not counting full-time students, Census 2021 |
+| `"unemployed_men"` | Unemployed men aged 16 to 64, not counting full-time students, Census 2021 |
+| `"residents"` | Everyone who lives there, of every age, Census 2021. Use it when what you offer is for anyone |
+| `{"dataset": ..., "label": ..., "filters": {...}}` | Any table Nomis publishes by local authority. The filters are the category codes to add up. Counts are asked for (`measures` 20100) unless the filters name another measure |
+
+The three unemployment needs count the census group "Economically active
+(excluding full-time students): Unemployed", as the case study does. Full-time
+students who were looking for work are a separate census group and are not
+counted. To count them too, give the table form with both groups:
+
+```python
+options = {
+    "need": {
+        "dataset": "NM_2124_1",
+        "label": "Unemployed people aged 16 to 64, with full-time students",
+        "filters": {
+            "c2021_eastat_7": [2, 4],
+            "c_sex": 0,
+            "c2021_age_7": [2, 3, 4, 5],
+        },
+    }
+}
+```
+
+The need figures are public. They are fetched from Nomis once for each need
+and then kept in memory for as long as the program runs;
+`clear_need_cache()` forgets them. To run with no request to Nomis at all,
+keep a copy on the machine, in the same data folder as the
+[postcode table](postcodes.md#looking-up-postcodes-on-this-machine):
+
+```python
+from uk_open_data.analyses.need_reach import download_need_figures, keep_need_figures
+
+download_need_figures("unemployed")   # fetch once, when a server is built
+download_need_figures("residents")    # so the map can shade need by its rate
+
+# or keep figures of your own under a built-in need, for a demonstration
+keep_need_figures(
+    "unemployed",
+    [("E09000023", "Lewisham", 9000), ("E09000011", "Greenwich", 8000)],
+    note="invented for a demonstration.",
+)
+```
+
+A result that used a kept copy says so in its `sources` and its `working`,
+with the note the copy was kept with.
+
+The area you serve should hold the places you do not reach yet as well. Name it with `catchment`: a
+list of local authorities, or a country. When you leave it out, the analysis
+works the area out as the first analysis does: each local authority that holds
+at least 5% of the people located (`catchment_min_share`). When none does,
+every local authority in England and Wales is compared.
+
+An area worked out this way holds only places you already reach, so it can
+show where your reach is low against need but not where you reach nobody. The
+result says so in a warning. To see the places you do not reach, name the area.
+
+| Figure | Meaning |
+| --- | --- |
+| `people_supplied` | People in the data you gave |
+| `people_located` | People placed in a local authority in England or Wales |
+| `people_in_catchment` | People who live in the area you serve |
+| `areas_compared` | Local authorities compared |
+| `people_in_need` | People in need in the area you serve |
+| `reach_per_100_in_need` | People you reached per 100 people in need, across the area |
+| `high_need_areas` | Local authorities with high need |
+| `high_need_areas_without_people` | High-need local authorities where you reached nobody |
+| `share_of_people_in_high_need_areas` | Share of your people who live in high-need local authorities |
+| `share_of_need_in_high_need_areas` | Share of people in need who live there, for comparison |
+
+The charts `need_in_priority_areas` and `reach_in_priority_areas` show people
+in need and people reached per 100 in need for the places in `priority_areas`.
+
+The labels follow the need. When the need is every resident, the figures, the
+headings, the list, the working and the source say "residents" and "the local
+authorities with the most residents", not "people in need" and "high need".
+The fourth and fifth analyses do the same.
+
+The answer says so when the area was worked out from your data: it opens "In
+the 7 local authorities where most of your people live". When a fifth or more
+of the people in your data could not be placed in the area you serve, it ends
+by saying how many are not counted. When some of them could not be placed in
+any local authority, which is a name or a postcode to put right, and others
+live outside the area, which is not a mistake, it says how many of each.
+
+When only one local authority is compared every share is 100%, so
+`key_figures` names the rate and the two counts behind it instead:
+`reach_per_100_in_need`, `people_in_catchment` and `people_in_need`.
+
+| Table | Rows |
+| --- | --- |
+| `priority_areas` | The high-need local authorities, your lowest reach first: people in need, people, people per 100 in need. It is a list in that order and no more: a place on it can have more reach than the area as a whole |
+| `by_local_authority` | One per local authority compared, with need and reach in bands, and people in need for each 1,000 residents. This feeds the map |
+
+The map shades need by its rate, people in need for each 1,000 residents, in
+five equal groups. With fewer than five places, each is a group of its own,
+from the lowest group to the highest, and one place alone is in the middle
+group. The three groups of the reach layer work the same way. The note of a
+layer says so when its places are fewer than its groups, and says nothing of
+it otherwise. A count would
+make the largest places darkest whatever their need. The list of high-need places still goes by the count, as
+the case study does. The residents are the census count of everyone who lives
+in each local authority, loaded beside the need figures.
+
+The map falls back to the count in two cases, and the result says which way
+it went in its choices (`map_need`) and in the note of the map's `need` layer.
+One is when the need is every resident, so there is no rate to work out. The
+other is when the need figures came from a copy kept on the machine and no
+copy of the residents is kept beside it: the analysis does not fetch them, so
+that a run kept off the network stays off it.
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `suppress_below` | `5` | Counts above zero and below this are hidden |
+| `postcode_lookup` | `"auto"` | As for the first analysis |
+| `need` | `"unemployed"` | The need to compare your reach with |
+| `catchment` | worked out | A local authority name or code, a list of them, or `"England"`, `"Wales"` or `"England and Wales"` |
+| `catchment_min_share` | `0.05` | The share a local authority needs to join a worked-out area |
+| `top` | `10` | How many places to list, from 1 to 50 |
+
+```python
+result = run_analysis(
+    "need-reach",
+    clients,
+    columns={"postcode": "Client postcode"},
+    options={"need": "unemployed_women"},
+)
+
+result.table("priority_areas").to_frame()
+```
+
+A local authority with a hidden count is still ranked. It is ranked as if it
+had the largest count that would be hidden, which depends on the threshold
+alone, so the order of the list gives nothing away.
+
+!!! note "Before you use the figures"
+    Read `result.checks` and `result.caveats`. Low reach is not the same as
+    unmet need: another organisation may already serve the place. Need is a
+    count of people, so large local authorities are more likely to be listed.
+
+## Who we are missing
+
+`who-we-miss` answers: who do we reach less than their share of the people who
+live here? It covers England and Wales, and is the method of the
+[Sobus case study](../case-studies/sobus-bame-analysis.md) turned into a
+function.
+
+It accepts three shapes of data:
+
+| Input mode | Columns | What it is |
+| --- | --- | --- |
+| `postcodes` | `group`, `postcode` | One row per person, with their group and home postcode |
+| `group_counts` | `group`, `count` | Already totalled by group |
+| `people` | `group` | One row per person, with their group and no location |
+
+The `group` column holds each person's ethnic group, or their sex, in your own
+words. The analysis matches each label to a group the 2021 Census publishes,
+counts your people by group, and sets each group's share of your people
+against its share of the residents of **the area you serve**. A group is
+**under-represented** when its share of your people is below four fifths of
+its share of residents.
+
+Choose what the column holds with the `characteristic` option:
+
+| `characteristic` | Groups compared | Census table |
+| --- | --- | --- |
+| `"ethnic_group"` (default) | Asian, Black, Mixed, White, Other | TS021 |
+| `"sex"` | Female, Male | TS008 |
+
+Labels are matched by their wording. "Black Caribbean" is Black, "White and
+Black Caribbean" is Mixed, "Any other ethnic group" is Other, and "Not stated"
+matches nothing. People whose label matches nothing are counted, left out of
+the shares, and a warning says how many there are. Codes and short forms
+cannot be matched by wording, so say where they belong with the `groups`
+option:
+
+```python
+result = run_analysis(
+    "who-we-miss",
+    clients,
+    columns={"group": "Ethnicity", "postcode": "Client postcode"},
+    options={"groups": {"BAF": "Black", "WBR": "White"}},
+)
+
+result.table("by_group").to_frame()
+```
+
+The result names the census groups. It never repeats one of your own labels.
+The `group` role lists the census group names as its `reported_values`,
+because a label of yours can be the same as one of them.
+
+With postcodes the analysis works out the area you serve as the first analysis does: the
+local authorities that each hold at least 5% of the people it could place.
+People who live outside it are left out, because they are set against the
+residents of the area you serve. Without postcodes the analysis cannot tell where you
+work, so you must name the area with `catchment`.
+
+The residents come from [Nomis](ons.md), for every local authority at once.
+They are public, are fetched once for each characteristic and are then kept in
+memory; `clear_residents_cache()` forgets them. To run with no request to
+Nomis, keep a copy on the machine, as for need figures:
+
+```python
+from uk_open_data.analyses.who_we_miss import download_residents, keep_residents
+
+download_residents("ethnic_group")   # fetch once, when a server is built
+
+# or keep figures of your own, for a demonstration
+keep_residents(
+    "sex",
+    [("E09000023", "Lewisham", {"Female": 156000, "Male": 144000})],
+    note="invented for a demonstration.",
+)
+```
+
+| Figure | Meaning |
+| --- | --- |
+| `people_supplied` | People in the data you gave |
+| `people_in_catchment` | People set against residents: with postcodes, those who live in the area you serve |
+| `people_matched` | People whose label matched a census group. The shares are of these people |
+| `people_not_matched` | People with no label, or one that matched no census group |
+| `residents` | Residents of the area you serve in the 2021 Census |
+| `groups_under_represented` | Groups you reach less than their share of residents |
+| `share_of_people_first_group` | Share of your people in the first of those groups |
+| `share_of_residents_first_group` | Share of residents in that group |
+
+The last two are the two shares the answer quotes, each with its value before
+rounding. They are there when the answer quotes them: when a group is reached
+less than its share and has people in your data.
+
+The chart `people_against_residents` sets the share of your people in each
+group against the share of residents.
+
+| Table | Rows |
+| --- | --- |
+| `by_group` | One per census group: people, share of people, residents, share of residents, `representation` (the first share divided by the second) and whether the group is under-represented |
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `suppress_below` | `5` | Counts above zero and below this are hidden |
+| `postcode_lookup` | `"auto"` | As for the first analysis |
+| `characteristic` | `"ethnic_group"` | What the group column holds |
+| `groups` | none | Your label to census group, for labels the wording does not settle |
+| `catchment` | worked out from postcodes | A local authority name or code, a list of them, or `"England"`, `"Wales"` or `"England and Wales"`. Needed when there are no postcodes |
+| `catchment_min_share` | `0.05` | The share a local authority needs to join a worked-out area |
+| `under_represented_below` | `0.8` | A group is under-represented below this fraction of its share of residents |
+
+A group with a hidden count is not judged. A group nobody came from has a
+count of zero, which is shown, and is under-represented.
+
+This analysis has no map yet. The residents are compared across the whole
+area you serve, not place by place.
+
+!!! note "Before you use the figures"
+    Read `result.checks` and `result.caveats`. A gap is not proof of a
+    barrier: groups differ in age and in need, and the census counts
+    residents of every age. With few people, a gap can be chance. Do not
+    publish two runs with different areas side by side, because a small
+    count can be worked out by taking one from the other.
+
+## Provision gap
+
+`provision-gap` answers: where is provision thin against need across a region?
+It covers England and Wales, by local authority, and follows the method of the
+[Starlight case study](../case-studies/starlight-children-mapping.md): total
+what is provided in each place, divide by the people it is for, and look at
+the places where need is high and provision is thin.
+
+The analysis is about sites and what they provide, not about people. It accepts
+three shapes of data:
+
+| Input mode | Columns | What it is |
+| --- | --- | --- |
+| `sites` | `postcode`, `volume` | One row per site or service, with how much it provides |
+| `area_volumes` | `local_authority`, `volume` | Already totalled by local authority, named or coded |
+| `site_list` | `postcode` | One row per site or service. Each site counts as one |
+
+The volume is a number of zero or more: sessions, places, boxes, hours. A row
+whose volume is not a number stops the run, and the message says how many rows
+to correct. Postcodes are placed as in the first analysis: on your machine when
+the postcode table is installed, and with postcodes.io otherwise.
+
+The analysis loads a count of people in every local authority from
+[Nomis](ons.md), divides the provision in each one by it, and lists
+the high-need local authorities with the least provision per 1,000
+people. A local authority is high need when its count is in the top quarter
+of the area you serve, as in the second analysis.
+
+The `need` option takes the same values as in the second analysis, and the same
+kept copies (`keep_need_figures`, `download_need_figures`) are used. The
+default here is `"residents"`, everyone who lives in the place, because
+provision is often for anyone. Choose a narrower need when what you provide is
+for a group Nomis counts.
+
+| Figure | Meaning |
+| --- | --- |
+| `volume_supplied` | Provision in the data you gave |
+| `volume_located` | Provision placed in a local authority in England or Wales |
+| `volume_in_catchment` | Provision in the area you serve |
+| `areas_compared` | Local authorities compared |
+| `areas_without_provision` | Local authorities where you provide nothing |
+| `people_in_need` | People in need in the area you serve |
+| `volume_per_1000_in_need` | Provision per 1,000 people in need, across the area |
+| `high_need_areas` | Local authorities with high need |
+| `high_need_areas_without_provision` | High-need local authorities where you provide nothing |
+| `share_of_provision_in_high_need_areas` | Share of your provision that is in high-need local authorities |
+| `share_of_need_in_high_need_areas` | Share of people in need who live there, for comparison |
+
+The charts `need_in_priority_areas` and `provision_in_priority_areas` show
+people in need and provision per 1,000 in need for the places in
+`priority_areas`. The map has two layers, `need` and `provision`.
+
+| Table | Rows |
+| --- | --- |
+| `priority_areas` | The high-need local authorities, thinnest provision first: people in need, volume, volume per 1,000 in need. The labels follow the need, as in the second analysis |
+| `by_local_authority` | One per local authority compared, with need and provision in bands. This feeds the map |
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `postcode_lookup` | `"auto"` | As for the first analysis |
+| `need` | `"residents"` | The people to set your provision against |
+| `catchment` | England and Wales | A local authority name or code, a list of them, or `"England"`, `"Wales"` or `"England and Wales"` |
+| `top` | `10` | How many places to list, from 1 to 50 |
+
+```python
+result = run_analysis(
+    "provision-gap",
+    sites,
+    columns={"postcode": "Site postcode", "volume": "Sessions a year"},
+    options={"catchment": "Wales"},
+)
+
+result.table("priority_areas").to_frame()
+```
+
+This analysis hides no count, and has no `suppress_below` option. Provision is
+what an organisation provides, not a number of people, so every total is shown,
+however small. Where a local authority holds one site, the provision shown for
+it is that site's. If your numbers are people, such as people seen at each site,
+use the need against reach analysis instead, which hides small counts. The result
+still names no site and repeats no postcode.
+
+The case study compares England's Integrated Care Boards and uses hospital
+admissions as the need. This analysis compares local authorities and takes the
+need from Nomis. Health boards, and a need column of your own, are not in it
+yet.
+
+!!! note "Before you use the figures"
+    Read `result.checks` and `result.caveats`. Thin provision is not the same
+    as unmet need: another organisation may already provide there. Provision
+    is counted where a site is, and people travel. Need is a count of people,
+    so large local authorities are more likely to be listed.
+
+## Access and distance
+
+`access-distance` answers: how far are people from our nearest site, and where
+would a new site help most? It covers England and Wales, by local authority,
+and follows the method of the
+[Material Focus case study](../case-studies/material-focus-recycling.md).
+
+Like the provision gap analysis, it is about sites, not about people. It accepts
+two shapes of data:
+
+| Input mode | Columns | What it is |
+| --- | --- | --- |
+| `site_coordinates` | `latitude`, `longitude` | One row per site, in degrees. West is negative |
+| `site_postcodes` | `postcode` | One row per site. Placed on your machine when the postcode table and the centres of neighbourhoods are there |
+
+A row whose position is outside the United Kingdom is left out and counted;
+that is also what happens when the two columns are swapped. A site in
+Scotland or Northern Ireland still counts as a site.
+
+### Site postcodes that stay on your machine
+
+The [postcode table](postcodes.md#looking-up-postcodes-on-this-machine) holds
+the neighbourhood of each postcode but no position. So the analysis places a site
+at the centre of its neighbourhood, from a file of neighbourhood centres kept
+on your machine. In a town that moves a site by a few hundred metres, and in
+the countryside by up to a few kilometres; the result carries a caveat that
+says so. Keep the centres once, when a server is built:
+
+```python
+from uk_open_data.analyses.access_distance import download_centres
+
+download_centres("neighbourhood")   # about 35,700 centres, about 1 MB
+```
+
+What happens to site postcodes follows `postcode_lookup`:
+
+| `postcode_lookup` | Postcode table installed | No postcode table |
+| --- | --- | --- |
+| `"auto"` (the default) | Placed on your machine. Nothing is sent | Sent to postcodes.io |
+| `"offline"` | Placed on your machine. Nothing is sent | The analysis stops |
+| `"online"` | Sent to postcodes.io | Sent to postcodes.io |
+
+With a postcode table installed and no centres kept, the analysis stops and names
+the function to run. It never falls back to sending postcodes, and it never
+fetches the centres while an analysis runs. A server that sets `"offline"` cannot
+send a postcode. The result says which happened, under `choices` and
+`privacy.sent_to_third_parties`.
+
+The table and the centres cover England and Wales. On your machine, a site
+with a Scottish or Northern Irish postcode is not found and is left out and
+counted; give its latitude and longitude instead.
+
+The analysis loads the people in every local authority from [Nomis](ons.md) and
+the centre of every local authority from the ONS Open Geography Portal. For
+each local authority it measures the distance in a straight line from the
+centre to your nearest site, to the nearest kilometre. A local authority is
+within reach when that distance is `within_km` or less. The list shows the
+local authorities beyond reach, with the most people first: the places where
+a new site would bring the most people within reach.
+
+**Distance is not travel time.** The package has no road or public transport
+times, so the analysis does not turn kilometres into minutes. And it measures from
+the centre of a local authority, not from where each person lives, which is
+rough for a large rural one.
+
+The `need` option takes the same values as in the second analysis, and the same
+kept copies. The default is `"residents"`. The centres can be kept on the
+machine too, so the analysis runs with no request at all:
+
+```python
+from uk_open_data.analyses.access_distance import download_centres, keep_centres
+
+download_centres()   # fetch once, when a server is built
+
+# or keep centres of your own, for a demonstration
+keep_centres(
+    [("E09000023", 51.45, -0.02), ("E09000011", 51.47, 0.05)],
+    note="invented for a demonstration.",
+)
+
+# the same for the centres of neighbourhoods, which place site postcodes
+keep_centres(
+    [("E01003189", 51.46, -0.01)],
+    note="invented for a demonstration.",
+    level="neighbourhood",
+)
+```
+
+| Figure | Meaning |
+| --- | --- |
+| `sites_supplied` | Sites in the data you gave |
+| `sites_located` | Sites placed in the United Kingdom |
+| `areas_compared` | Local authorities compared |
+| `people_in_need` | People in the area you serve |
+| `average_distance_km` | Average distance from the centre of each person's local authority to your nearest site. A place with many people counts for more |
+| `share_of_people_within_reach` | Share of people in a local authority whose centre is within `within_km` of a site |
+| `people_beyond_reach` | People in a local authority whose centre is farther than that |
+| `areas_beyond_reach` | Local authorities whose centre is farther than that |
+| `farthest_distance_km` | Distance from the centre of the farthest local authority to a site |
+
+Every distance is from the centre of a local authority, the one the ONS
+publishes for it, and every person is counted there. That is coarse. A London
+borough is a few kilometres across, so 10 km says something about it. A large
+rural local authority can be 50 km across: a site can be inside it and still
+be farther than 10 km from its centre, and the place is then listed as far
+from a site. The answer, the labels, the headings and a caveat all say that
+distance is from the centre. Where the places you work in are large, set
+`within_km` higher and read the distances, not only who is within reach.
+
+The charts `people_in_priority_areas` and `distance_in_priority_areas` show
+the people and the distance for the places in `priority_areas`. The map has
+two layers, `distance` and `need`.
+
+| Table | Rows |
+| --- | --- |
+| `priority_areas` | The local authorities beyond reach, most people first: people, distance in kilometres. Empty when every place is within reach |
+| `by_local_authority` | One per local authority compared, with people and distance in bands. This feeds the map |
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `postcode_lookup` | `"auto"` | How site postcodes are placed. See the table above |
+| `need` | `"residents"` | The people to measure distance for |
+| `catchment` | England and Wales | A local authority name or code, a list of them, or `"England"`, `"Wales"` or `"England and Wales"` |
+| `within_km` | `10` | How many kilometres from a site counts as within reach |
+| `top` | `10` | How many places to list, from 1 to 50 |
+
+```python
+result = run_analysis(
+    "access-distance",
+    sites,
+    columns={"latitude": "Lat", "longitude": "Long"},
+    options={"catchment": "Wales", "within_km": 15},
+)
+
+result.table("priority_areas").to_frame()
+```
+
+This analysis hides no count, and has no `suppress_below` option. The result
+names no site and repeats no postcode or position. Distances are rounded to
+the kilometre, but the distances from several local authorities can still
+show roughly where a site is.
+
+!!! warning "Confidential addresses"
+    Do not share a result if the address of a site is confidential, such as a
+    refuge. A check in every result asks this.
+
+!!! note "Before you use the figures"
+    Read `result.checks` and `result.caveats`. The figures say how far people
+    are from a site. They do not say how far the people you see travel, or
+    whether anyone far away needs you.
+
+## Writing an analysis
+
+An analysis is an `AnalysisInfo` and a function that takes an `AnalysisInput` and
+returns an `AnalysisResult`. Register it with `register_analysis`. The rules every
+analysis keeps:
+
+1. Totals, never rows. Report problems by how many rows they affect.
+2. Hide small counts and anything that gives them away. Do not publish two
+   breakdowns that can be taken from each other to get a small count. Say in
+   the privacy notes that a hidden count is not always small.
+3. Give every figure a source.
+4. State every choice and name the option that changes it. Give each option
+   a `label`, use the label in quotes whenever a sentence points at the
+   option, and pass `option=` or `role=` when you raise `AnalysisInputError`.
+   Give a table `headings` for any column the package has no heading for.
+5. Leave checks for a person to answer.
+6. List anything sent off the machine in `privacy.sent_to_third_parties`.
+7. Answer the question in `answer`, from figures the result shows and nothing
+   else, and name the figures to show first in `key_figures`.
+8. Give a share or a rate its `exact` value, from `before_rounding`, when the
+   figure is shown, and never when it is hidden. Mark an option `private`
+   when the value a person gives holds words from their own data, so the
+   code that runs the analysis again leaves it out. `run_analysis` writes
+   `result.code` for you.
+
+
+## Command Line
+
+# Command line
+
+The package installs one command under two names, `uk-open-data` and
+`kindtech`. It runs [analyses](analyses.md) on a file without writing any Python.
+
+```bash
+uv add uk-open-data pandas        # the command needs pandas or polars installed
+uv run uk-open-data analysis list
+```
+
+## Commands
+
+### `analysis list`
+
+Lists every analysis with the question it answers. Add `--json` for the full
+descriptions.
+
+```bash
+uk-open-data analysis list
+# reach-deprivation: Are we reaching people in the most deprived neighbourhoods?
+```
+
+### `analysis describe ANALYSIS_ID`
+
+Shows what an analysis needs: the shapes of data it accepts, the columns, and the
+options with their defaults. Add `--json` for the same as JSON.
+
+```bash
+uk-open-data analysis describe reach-deprivation
+```
+
+### `analysis run ANALYSIS_ID FILE`
+
+Runs an analysis on a `.csv`, `.xlsx` or `.ods` file and prints a plain-text report:
+a sentence or two that answer the question, then the figures, the tables, the
+checks to make before using them, what the figures cannot say, the choices
+made, the working, the figures before rounding, the sources, a privacy
+summary and the Python that runs it again. A number has its unit
+after it, such as "64.7 km", unless the label beside it already says the unit.
+
+```bash
+uk-open-data analysis run reach-deprivation clients.csv \
+    --column postcode="Client postcode"
+```
+
+| Flag | Meaning |
+| --- | --- |
+| `--column ROLE=COLUMN` | Which of your columns plays a role. Repeat it for each role |
+| `--option NAME=VALUE` | Change an option. Repeat it for each option |
+| `--sheet NAME` | The sheet to read from a spreadsheet. The first sheet is read by default |
+| `--json` | Print the whole result as JSON instead of a report |
+| `--summary` | With `--json`, leave out the rows of long tables such as map data |
+| `--output PATH` | Write to a file instead of the screen |
+| `--map PATH` | Also draw the map and save it as an `.svg` file |
+| `--map-layer LAYER` | What the map is coloured by, for example `people`. The first layer is used by default |
+
+An option value is read as JSON when it is JSON, and as text otherwise:
+
+```bash
+uk-open-data analysis run reach-deprivation clients.csv \
+    --column postcode="Client postcode" \
+    --option suppress_below=10 \
+    --option catchment='["Lewisham", "Greenwich"]'
+```
+
+When the file, a column or an option cannot be used, the command prints what is
+wrong and exits with status 2. The message never repeats a value from your
+data, so it is safe to paste into a chat or an issue.
+
+A message names an option by its plain name, as a page shows it, such as
+'Area you serve'. When an error is about one option or one column, a last line
+says what to type here: "On the command line this is --option
+catchment=VALUE." `analysis describe` lists every option with both names.
+
+The outlines for `--map` come from the ONS Open Geography Portal. They
+usually come in a few seconds, but at times the service takes a minute or two
+to answer, so the command first writes "Fetching the outlines for the map
+..." to standard error. The report on standard output is not changed by it. When the outlines
+cannot be fetched, the report is still printed or written, no map file is made,
+and the command says so in one sentence and exits with status 3. Status 3 means
+the report is whole and only the map is missing, so a script can keep the
+report. Status 2 means nothing was made.
+
+A run that prints its answer writes one line to the `uk_open_data.runs` logger,
+with the analysis, the input mode and the word `cli`. Nothing collects it on
+your machine and nothing is sent anywhere. See
+[`record_run`](analyses.md#record_runanalysis_id-input_mode-door).
+
+### `postcodes download`
+
+Fetches the postcode table, a few megabytes, so that analyses look postcodes up on
+your machine and send none of them out. Run it once. `--force` fetches it
+again, and `--url` with `--sha256` fetches a copy you host yourself.
+
+```bash
+uk-open-data postcodes download
+```
+
+### `postcodes info`
+
+Shows the installed table's edition, size and the credits to show when you
+publish something made with it. With no table installed it says so, says first
+that an analysis still works, by looking postcodes up with postcodes.io and
+saying so in its result, and then says how to get a table. That is not an
+error.
+
+### `postcodes build SOURCE TABLE --edition EDITION`
+
+Builds a table from the ONS best-fit postcode lookup (`.csv`, or the `.zip` it
+comes in) and prints its SHA-256. This is how a new edition is published; you
+do not need it to use the package.
+
+### `connector`
+
+Starts the [connector](connector.md), which offers the analyses to a chat
+assistant as tools. It is the same as `python -m uk_open_data.connector` and
+takes the same options:
+
+```bash
+uk-open-data connector
+uk-open-data connector --transport streamable-http --port 8000
+```
+
+It needs the `connector` extra, and says so when the extra is not installed:
+
+```bash
+uv add "uk-open-data[connector]"
+```
+
+Over stdio, the default, the command prints nothing and waits: the assistant
+starts it and talks to it. It runs until the assistant, or you, stop it.
+
+## Using it from an assistant
+
+Give an assistant the JSON summary, not your file:
+
+```bash
+uk-open-data analysis run reach-deprivation clients.csv \
+    --column postcode="Client postcode" --json --summary
+```
+
+The summary holds totals only, with small counts hidden. Your rows stay on your
+machine.
+
+
+## Connector for chat assistants
+
+# Connector for chat assistants
+
+The `uk_open_data.connector` module offers the analyses and open data to a chat
+assistant, such as Claude or ChatGPT, over the
+[Model Context Protocol](https://modelcontextprotocol.io/). A charity worker
+asks a question in their own words; the assistant calls a tool; figures come
+back with their sources.
+
+Every tool is read-only, and every tool keeps one rule: **the assistant sees
+totals, never rows**.
+
+## Start it
+
+The server needs the `connector` extra:
+
+```bash
+uv add "uk-open-data[connector]"
+uv run uk-open-data connector
+```
+
+With pip it is `pip install "uk-open-data[connector]"`, then
+`uk-open-data connector`. Started without the extra, the command ends with one
+sentence that says how to install it.
+
+`python -m uk_open_data.connector` starts the same thing and takes the same
+options. That runs over stdio, which is how a desktop assistant starts a local
+connector. For Claude Desktop or Claude Code, add this to the MCP
+configuration, with the path to your checkout:
+
+```json
+{
+  "mcpServers": {
+    "kindtech": {
+      "command": "uv",
+      "args": [
+        "run", "--directory", "/path/to/uk-open-data", "--extra", "connector",
+        "uk-open-data", "connector"
+      ]
+    }
+  }
+}
+```
+
+To host it, run the same server over Streamable HTTP. The address to give an
+assistant then ends in `/mcp`:
+
+```bash
+uv run uk-open-data connector --transport streamable-http --port 8000
+```
+
+## Tools
+
+| Tool | What it does |
+| --- | --- |
+| `find_analysis` | Finds the analysis that answers a question, and says what data it needs. |
+| `describe_place` | Describes a place in England from the Indices of Deprivation 2025. |
+| `run_analysis_on_counts` | Runs an analysis on counts that are already totalled by area or by group. |
+
+### `find_analysis`
+
+`query` is the question in the person's words, or left out to list every analysis.
+The answer holds each analysis description, best match first.
+
+An analysis that takes no totals cannot run in a chat. `needs_rows` in the answer
+names the listed analyses of that kind and says where they can run. The access
+and distance analysis is one: it needs a row per site that says where the site
+is.
+
+### `describe_place`
+
+`place` is a local authority name or code, a 2021 LSOA code or a postcode
+district such as `SE13`.
+
+```python
+from uk_open_data.connector import describe_place
+
+answer = describe_place("Lewisham")
+answer["status"]            # "found"
+answer["place"]["code"]     # "E09000023"
+answer["figures"]           # neighbourhoods, residents, shares in the most deprived areas
+answer["tables"]            # by deprivation decile, and by type of deprivation
+answer["sources"]           # publisher, edition, licence and link
+```
+
+`status` is `found`, `choose` (several places match, listed in `matches`),
+`not_found`, `not_covered` (outside England), `not_accepted` (a full postcode
+or a street address) or `unavailable` (a data source could not be reached).
+
+A full postcode is not accepted, even a venue's, because nothing tells a
+venue's postcode from a person's home. It is not looked up, sent anywhere or
+repeated, and the message asks for the first half of the postcode or the name
+of the place. For one neighbourhood, pass its 2021 LSOA code.
+
+A street address is not accepted either: a postcode inside other words, or a
+number beside a word such as "Road", "Flat" or "House". The tool describes
+areas, not buildings, and an address can be a person's home. The message says
+an address should not be sent and asks for the council area or the first half
+of the postcode.
+
+The tool describes places in England only, because the deprivation index it
+reads is England's. A council, code or postcode in Wales gives `not_covered`
+with a message that says the place is in Wales and that the analyses which
+cover England and Wales still work for it.
+
+The deprivation index is read from a copy kept on this machine when there is
+one, and the source in the answer then says so. When you host the connector,
+keep it when the image is built (`uk_open_data.imd.download_imd`), so the first
+call does not wait on a download. A copy kept with `uk_open_data.imd.keep_imd`
+that leaves out the types of deprivation gives the same answer without that
+table, and says so in `warnings`. A copy that cannot be read gives the status
+`unavailable`.
+
+A postcode district is looked up in the
+[postcode table on this machine](postcodes.md) when one is installed, so it is
+not sent anywhere. Without a table it is sent to postcodes.io. Either way the
+answer says which happened under `privacy`. When you host the connector,
+install the table when the image is built (`uk-open-data postcodes download`),
+so a district stays on your server.
+
+### `run_analysis_on_counts`
+
+`analysis_id` names the analysis. `counts` holds one object per area or group, keyed by
+the role names of an input mode the analysis marks as `aggregated`. `options`
+changes the analysis options.
+
+| Analysis | One row of `counts` | Options it needs |
+| --- | --- | --- |
+| `reach-deprivation` | `{"lsoa_code": "E01003189", "count": 12}` | none |
+| `need-reach` | `{"local_authority": "Lewisham", "count": 120}` | none |
+| `who-we-miss` | `{"group": "Black Caribbean", "count": 40}` | `catchment`, the area you serve |
+| `provision-gap` | `{"local_authority": "Lewisham", "volume": 1200}` | none |
+
+A `volume` is what the charity provides in that place, such as sessions, places
+or hours. The provision gap analysis hides no small figure, because a volume is
+not a count of people, and its result says so.
+
+The answer holds the analysis result without the rows of its detail tables, so an
+assistant is not handed a row per neighbourhood. Such a table comes back with
+its columns and no rows, and `rows_left_out` in the answer names those tables
+and says they are not empty, so that an assistant does not report "nothing
+found". Where the result's map is drawn from one of them, the note says the
+map cannot be drawn from the answer. Rows about individual people,
+such as one postcode per person, are refused, and so is one row per site.
+
+The result holds `answer`, one or two sentences that answer the analysis's
+question, and `key_figures`, the ids of the figures behind them. Both come
+through as the analysis wrote them. Where a result has an answer, `open_with`
+tells the assistant to begin its reply with that sentence in its exact words,
+so a person reads the same words in a chat as on the Kindtech Evidence page
+and at the command line. The sentence passes the same check as the rest of the
+result: it is withheld if it repeats a value from the rows.
+
+The result also holds what a person needs to check it. A share or a rate has
+`exact`, its value before rounding, and the result has `code`, the Python that
+runs the analysis again with the same settings. Both are described under
+[the working](analyses.md) and come through as the analysis wrote them. The
+code leaves the names of the person's columns to be filled in, and a setting
+that holds their own labels, such as `groups` for `who-we-miss`, is written as
+`{}`, so it passes the same check as the rest of the result. The server's
+instructions and the tool's description tell an assistant to quote figures as
+they are shown, rounded, and to give an exact value or the code only when the
+person asks how a figure was worked out or asks for the code.
+
+A count or volume given as text that is nothing but a number, such as
+`"1200"` or `"1,200"`, is read as a number, because assistants often send one
+that way. This applies to the roles an analysis marks `amount` in its description
+and to no other. Any other text there is left for the analysis, which says how
+many rows to correct.
+
+```python
+from uk_open_data.connector import run_analysis_on_counts
+
+answer = run_analysis_on_counts(
+    "need-reach",
+    [
+        {"local_authority": "Lewisham", "count": 120},
+        {"local_authority": "Greenwich", "count": 40},
+    ],
+    options={"catchment": ["Lewisham", "Greenwich", "Bexley", "Bromley"]},
+)
+answer["status"]              # "ok"
+answer["result"]["answer"]    # the sentence to open with
+answer["result"]["figures"]   # headline figures, small counts hidden
+answer["result"]["tables"]    # the high-need places, lowest reach first
+```
+
+`catchment` is the area you serve: every place the charity serves, whether or
+not it reaches anyone there yet. Without it, need against reach compares only
+the local authorities that hold at least 5% of the people in the rows, so it
+cannot show a place the charity does not reach yet, and its result says so in
+a warning. With one place there is nothing to compare, and the answer says
+that too. An assistant should ask the person for the area they serve when the
+question is about where they are missing.
+
+`status` is `ok`, `would_hide_counts`, `input_problem` (`problems` lists what
+to fix, for example an option the analysis needs), `needs_rows`, `unknown_analysis` or
+`unavailable` (a data source the analysis needs could not be reached).
+
+A problem sentence is written for the person and names an option by the label
+they read, in quotes: "Change 'Area you serve' to include them." An assistant
+passes options by their code names, so when the analysis says which one a
+problem is about, the answer also has `option` (for example `catchment`) or
+`role` (the column, for example `count`). `find_analysis` lists each option's
+label beside its name.
+
+`needs_rows` is the answer for an analysis that takes no totals, such as the access
+and distance analysis, whatever rows are passed. Its message says the analysis cannot
+run in a chat, because it needs a row for each site and this tool takes totals
+only, and that it runs on the Kindtech Evidence page or with the command line tool.
+
+#### The map
+
+An analysis result describes a map, and the table that feeds it is one of the
+tables left out of an answer. So the server draws the map itself, one picture
+for each thing the map can be coloured by, and sends the pictures beside the
+answer: in the tool result's `_meta`, under `kindtech/map`, which is for the
+app the person is using and is not part of what a model is given. The tool
+points to a small page, `ui://kindtech/analysis-map.html`, that shows them. An
+assistant app that supports [MCP Apps](https://github.com/modelcontextprotocol/ext-apps)
+shows that page with the answer, so the person sees the map in the chat. An
+app that does not shows the answer alone, as before.
+
+The answer itself gains `map`, with `drawn` and a `note` for the assistant: a
+picture was drawn for the person and the assistant is not given it, or why
+none was drawn. An analysis with no map has no `map` in its answer, and neither has
+a result that was held back. The plain Python function `run_analysis_on_counts`
+draws nothing; only the server does.
+
+The outlines are fetched from the ONS Open Geography Portal each time a map is
+drawn. What is sent is public area codes only: those of the areas on the map
+and of the local authorities near it, which are drawn pale around it. When
+the outlines cannot be fetched the figures come back as usual and the note
+says no map was drawn.
+
+The figures do not wait long for a picture. A map in a chat is drawn from the
+quick outlines, simplified to 200 metres, where the page and the command line
+ask for finer ones. Outlines usually come in a few seconds, but at times the
+boundary service has taken a minute or more for one map, and it is not known
+why. So the server waits 15 seconds for the outlines and then sends the answer
+without a map, with a note that says so and suggests running the analysis
+again in a few minutes. The fetch is left to finish. The outlines of every
+local authority are kept in memory once fetched, for as long as the server
+runs.
+
+When you host the connector, keep the outlines on your server and pass a
+function that reads them, so that no run waits on another service:
+
+```python
+from uk_open_data.connector import build_server
+
+server = build_server(map_boundaries=outlines_kept_here)  # takes an analysis result
+```
+
+Pictures of more than about 1.5 MB together are not sent: the first layers
+that fit are, and when not even one fits the note says so.
+
+#### When counts would be hidden
+
+An analysis hides a count from 1 to 4, and where it hides one count in a table it
+hides a second, so the first cannot be worked out from the total. In a chat
+that second count can be a number the person has just typed, which reads as a
+fault. So when the answer would hide any figure or table row, the first call
+holds it back and says so:
+
+```python
+answer = run_analysis_on_counts(
+    "reach-deprivation",
+    [
+        {"lsoa_code": "E01003189", "count": 3},
+        {"lsoa_code": "E01003190", "count": 30},
+    ],
+)
+answer["status"]       # "would_hide_counts"
+answer["would_hide"]   # {"figures_and_rows": 3, "counts_below": 5}
+answer["choices"]      # combine the small counts first, or run as it is
+```
+
+The answer holds no figure from the run and nothing from the rows. The person
+then chooses. They can add each small count to a neighbouring area's count, or
+to a broader group's, and send the rows again, saying with the figures which
+rows were combined. Or they can take the result with those counts hidden:
+
+```python
+answer = run_analysis_on_counts(analysis_id, counts, hidden_counts="accept")
+answer["status"]       # "ok"
+```
+
+An analysis that hides nothing, such as the provision gap analysis, never asks.
+
+When you host the connector, keep the public figures three of the analyses
+compare with on the server when the image is built, so a run does not wait on
+Nomis: `uk_open_data.analyses.need_reach.download_need_figures` for the need against
+reach analysis, the same function called with `"residents"` for the provision gap
+analysis, which sets provision against everyone who lives in a place unless told
+otherwise, and `uk_open_data.analyses.who_we_miss.download_residents` for the who we
+are missing analysis.
+
+The `"residents"` figures serve two analyses. Need against reach uses them too,
+to shade its map by people in need for each 1,000 residents. When the need
+figures are kept and the residents are not, it does not fetch them: the map is
+shaded by the count and the result says so in its choices. Keep both and the
+map goes by the rate.
+
+## The privacy rule
+
+- No tool accepts rows about people. `run_analysis_on_counts` takes only input
+  modes an analysis marks as `aggregated`.
+- Every result passes through `ensure_totals_only` before it is returned. If a
+  value from the input, such as a postcode or an area code sent with a count,
+  appears anywhere in a result, the result is withheld.
+- The one exception is a role an analysis marks as `reported`: a column that holds
+  names the result uses too. For local authorities every value is a public
+  name. For a column that also holds a person's own words, such as their
+  ethnic group, the role lists the exact names the result uses
+  (`reported_values`, for example "White"), and only those may come back: a
+  charity's own label, such as "Black Caribbean", is still withheld if a
+  result repeats it. Small counts are still hidden, and a value with the
+  shape of a postcode is always withheld.
+- Error messages name the argument that was wrong and never quote its value.
+- The log follows the same rule. When a data source cannot be reached, the log
+  holds the kind of error and not the web address. The code that asks the
+  boundary service logs the address it asked, which holds the area codes of
+  the map, so the connector's command replaces each warning or error from
+  that code with one sentence that says a line was left out. A program that
+  builds the server itself and lets it fetch outlines calls
+  `uk_open_data.connector.maps.keep_addresses_out_of_the_log()` once to do
+  the same. When a tool crashes, the
+  assistant is told only that the tool failed, and the log says which tool
+  stopped, with what kind of error and where in the code, and leaves out the
+  error's own text, which can quote a value from the rows.
+- An answer given through `run_analysis_on_counts` is counted with one line on
+  the `uk_open_data.runs` logger, written by
+  [`record_run`](analyses.md#record_runanalysis_id-input_mode-door):
+  `run analysis=need-reach mode=area_counts door=chat`. It holds the analysis,
+  the input mode and the word "chat", each from a fixed list, and nothing from
+  the rows or the options. A run that was held back, refused or withheld is not
+  counted. Nothing is sent anywhere: on your own machine the line goes to
+  stderr with the rest of the log, at any `--log-level`, and a host counts the
+  lines in the logs it keeps.
+- `tests/test_connector_privacy.py` calls every tool the way an assistant does
+  and fails if a row-level value reaches a result. A new tool must add a case
+  there.
+
+
 ## Data Sources
 
 # Data Sources
 
 KindTech wraps two UK public data APIs that aren't prominently documented for
-developers. This page documents the APIs, their quirks, and how kindtech's
+developers. This page documents the APIs, their quirks, and how this package's
 ingestion scripts work.
 
 ---
@@ -976,7 +2546,8 @@ though the ONS Geography team has used
 | Endpoint | Description |
 |---|---|
 | `https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services?f=json` | Service catalog (JSON) |
-| `.../{service_name}/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson` | Query features as GeoJSON |
+| `.../{service_name}/FeatureServer?f=json` | The layers a service holds. Most hold one, numbered 0, but not all |
+| `.../{service_name}/FeatureServer/{layer}/query?where=1%3D1&outFields=*&f=geojson` | Query features as GeoJSON |
 | `https://www.arcgis.com/sharing/rest/portals/ESMARspQHYMw9BZ9?f=json` | Organisation metadata |
 | `https://www.arcgis.com/sharing/rest/community/users/ONSGeography_data?f=json` | User profile |
 
@@ -1096,11 +2667,11 @@ All entries are kept in the catalog. No skip lists, no manual curation.
 
 ### Geo ingestion
 
-Parses ~3,700 ArcGIS services down to **615 boundary datasets** across **24
-geography types**, spanning 1921-2025. Stdlib-only (`csv`, `re`, `requests`).
+Parses ~2,500 ArcGIS services down to **654 boundary datasets** across **24
+geography types**, spanning 1921-2026. Stdlib-only (`csv`, `re`, `requests`).
 
 ```bash
-uv run python -m kindtech.geo._ingestion
+uv run python -m uk_open_data.geo._ingestion
 ```
 
 ---
@@ -1190,7 +2761,7 @@ and source annotations. Completes in ~6 seconds for 1,615 datasets.
 Stdlib-only (`csv`, `requests`).
 
 ```bash
-uv run python -m kindtech.ons._ingestion
+uv run python -m uk_open_data.ons._ingestion
 ```
 
 ### Community packages
@@ -1338,7 +2909,7 @@ Instead of remembering NOMIS dataset IDs like `NM_2002_1`, you can use
 friendly aliases:
 
 ```python
-from kindtech import load_ons
+from uk_open_data import load_ons
 
 # These are equivalent
 df = load_ons("population", geography_type="LAD", time="latest")
@@ -1369,7 +2940,7 @@ Raw `NM_*` IDs are passed through unchanged — aliases are just a convenience.
 To list aliases programmatically:
 
 ```python
-from kindtech import list_dataset_aliases
+from uk_open_data import list_dataset_aliases
 
 for a in list_dataset_aliases():
     print(f"{a['alias']:30s} → {a['dataset_id']}")
@@ -1389,7 +2960,7 @@ Instead of looking up NOMIS TYPE codes, pass the same geography type you
 use with `load_geodata()`:
 
 ```python
-from kindtech import load_geodata, load_ons
+from uk_open_data import load_geodata, load_ons
 
 # Same geography concept, different APIs
 boundaries = load_geodata(geography_type="LAD", year="2024")
@@ -1431,7 +3002,7 @@ Source: NOMIS geography dimension metadata. To list all mappings
 programmatically:
 
 ```python
-from kindtech import list_geography_mappings
+from uk_open_data import list_geography_mappings
 
 for m in list_geography_mappings():
     print(m)
@@ -1454,10 +3025,10 @@ column:
   `LAD24CD`) to `geography_code` and `geography_name`
 
 ```python
-from kindtech import load_geodata, load_ons, geodata_to_properties
+from uk_open_data import load_geodata, load_ons, geodata_to_properties
 import pandas as pd
 
-geojson = load_geodata(geography_type="LAD")
+geojson = load_geodata(geography_type="LAD", year="2024")
 geo_df = pd.DataFrame(geodata_to_properties(geojson, "LAD", 2024))
 ons_df = load_ons("population", geography_type="LAD", time="latest")
 merged = geo_df.merge(ons_df, on="geography_code")
@@ -1467,7 +3038,7 @@ Under the hood, `geo_code_field()` and `geo_name_field()` derive the
 ArcGIS field names:
 
 ```python
-from kindtech._mapping import geo_code_field, geo_name_field
+from uk_open_data._mapping import geo_code_field, geo_name_field
 
 geo_code_field("LAD", 2024)  # "LAD24CD"
 geo_name_field("LAD", 2024)  # "LAD24NM"
@@ -1510,11 +3081,11 @@ boundaries (maps), the other provides statistical tables (numbers).
 │    codes                     │  (1,615 datasets)                     │
 │                              │                                      │
 │  Output:                     │  uv run python -m                     │
-│  geo/data/arcgis_services.csv│    kindtech.ons._ingestion            │
-│  (615 boundary datasets)     │                                      │
+│  geo/data/arcgis_services.csv│    uk_open_data.ons._ingestion            │
+│  (654 boundary datasets)     │                                      │
 │                              │                                      │
 │  uv run python -m            │                                      │
-│    kindtech.geo._ingestion   │                                      │
+│    uk_open_data.geo._ingestion   │                                      │
 │                              │                                      │
 ├──────────────────────────────┼──────────────────────────────────────┤
 │                              │                                      │
@@ -1540,10 +3111,10 @@ To refresh the catalogs when ONS publishes updates:
 
 ```bash
 # Geo boundaries — from ArcGIS
-uv run python -m kindtech.geo._ingestion
+uv run python -m uk_open_data.geo._ingestion
 
 # Statistics — from NOMIS
-uv run python -m kindtech.ons._ingestion
+uv run python -m uk_open_data.ons._ingestion
 ```
 
 Then commit the updated CSV files.
@@ -1589,7 +3160,7 @@ Then commit the updated CSV files.
 
 # Geographic Data
 
-The `kindtech.geo` module provides access to UK geographic boundary data from the [ONS ArcGIS Geoportal](https://geoportal.statistics.gov.uk/).
+The `uk_open_data.geo` module provides access to UK geographic boundary data from the [ONS ArcGIS Geoportal](https://geoportal.statistics.gov.uk/).
 
 ## Functions
 
@@ -1598,7 +3169,7 @@ The `kindtech.geo` module provides access to UK geographic boundary data from th
 Load geographic boundary data as GeoJSON.
 
 ```python
-from kindtech.geo import load_geodata, GeographyType, CoverageArea, BoundaryType
+from uk_open_data.geo import load_geodata, GeographyType, CoverageArea, BoundaryType
 
 # Using strings
 data = load_geodata(geography_type="LAD", coverage="UK", boundary_type="BGC")
@@ -1623,11 +3194,27 @@ manchester = load_geodata(geography_type="LAD", LAD21NM="Manchester")
 | `month` | `str`, `Month`, or `None` | `None` | Month (e.g., `"DEC"`, `Month.DEC`) |
 | `coverage` | `str`, `CoverageArea`, or `None` | `None` | Coverage area (`"UK"`, `"GB"`, `"EW"`) |
 | `boundary_type` | `str`, `BoundaryType`, or `None` | `"BGC"` | Boundary resolution |
+| `simplify_m` | `float` or `None` | `None` | Ask the service to leave out detail finer than about this many metres |
 | `**filters` | keyword args | | Field filters (e.g., `LAD21NM="Manchester"`) |
+
+#### Simpler outlines
+
+The ONS publishes most layers at several resolutions, and `boundary_type` picks one. Some layers are public only at full resolution and at 200 m, which is too heavy or too rough for a map of one town. For those, ask for the full-resolution layer and let the service simplify it:
+
+```python
+codes = ["E01003189", "E01003190"]
+outlines = load_geodata(
+    "LSOA", year="2021", boundary_type="BFE", simplify_m=20, LSOA21CD=codes
+)
+```
+
+A full-extent layer (`BFE`) runs to the low water mark and to the middle of a river, so it colours water as land on a map drawn large. Where a layer clipped to the shore is published (`BFC`), ask for that one. The service simplifies each outline by itself, so two neighbours may no longer share exactly the same edge; keep the distance small against the size of the map.
 
 #### Returns
 
 `dict` — A GeoJSON FeatureCollection. Returns `{"type": "FeatureCollection", "features": []}` if no matching service is found or the request fails.
+
+The ONS boundary service gives a few thousand features in one answer. A larger layer, such as every neighbourhood, is fetched page by page, so the collection holds every feature. If any page fails, the collection is empty and an error is logged: you never get a part of a layer as if it were the whole. A large layer with outlines takes many requests; filter by code when you need only some areas.
 
 ---
 
@@ -1636,7 +3223,7 @@ manchester = load_geodata(geography_type="LAD", LAD21NM="Manchester")
 Get available fields for filtering a dataset.
 
 ```python
-from kindtech.geo import get_field_info
+from uk_open_data.geo import get_field_info
 
 fields = get_field_info(geography_type="LAD")
 # [{"name": "LAD21CD", "type": "esriFieldTypeString", "alias": "LAD Code"}, ...]
@@ -1662,7 +3249,7 @@ fields = get_field_info(geography_type="LAD")
 List all supported geography types.
 
 ```python
-from kindtech.geo import get_available_geography_types
+from uk_open_data.geo import get_available_geography_types
 
 types = get_available_geography_types()
 # [{"code": "LAD", "description": "Local Authority Districts"}, ...]
@@ -1698,10 +3285,10 @@ All enums accept both string codes and enum values. They have `.code` and `.desc
 Extract feature properties from GeoJSON with normalised column names for easy joins with ONS data.
 
 ```python
-from kindtech import load_geodata, geodata_to_properties
+from uk_open_data import load_geodata, geodata_to_properties
 import pandas as pd
 
-geojson = load_geodata(geography_type="LAD")
+geojson = load_geodata(geography_type="LAD", year="2024")
 rows = geodata_to_properties(geojson, "LAD", 2024)
 geo_df = pd.DataFrame(rows)
 # geo_df has 'geography_code' and 'geography_name' columns
@@ -1727,10 +3314,10 @@ geo_df = pd.DataFrame(rows)
 The normalised `geography_code` column matches the column produced by `load_ons(normalize=True)`, enabling trivial joins:
 
 ```python
-from kindtech import load_geodata, load_ons, geodata_to_properties
+from uk_open_data import load_geodata, load_ons, geodata_to_properties
 import pandas as pd
 
-geojson = load_geodata(geography_type="LAD")
+geojson = load_geodata(geography_type="LAD", year="2024")
 geo_df = pd.DataFrame(geodata_to_properties(geojson, "LAD", 2024))
 ons_df = load_ons("population", geography_type="LAD", time="latest")
 merged = geo_df.merge(ons_df, on="geography_code")
@@ -1738,7 +3325,7 @@ merged = geo_df.merge(ons_df, on="geography_code")
 
 ## How it works
 
-1. The bundled CSV catalog (`geo/data/arcgis_services.csv`, 615 services across 24 geography types) maps geography type + year + coverage + boundary to an ArcGIS service ID
+1. The bundled CSV catalog (`geo/data/arcgis_services.csv`, 654 services across 24 geography types) maps geography type + year + coverage + boundary to an ArcGIS service ID
 2. `load_geodata()` finds the best matching service (most recent year if not specified)
 3. Queries the ArcGIS FeatureServer REST API for GeoJSON
 4. Returns the raw GeoJSON FeatureCollection
@@ -1749,7 +3336,7 @@ merged = geo_df.merge(ons_df, on="geography_code")
 
 # Deprivation (IMD)
 
-The `kindtech.imd` module loads UK deprivation data, keyed on ONS geography
+The `uk_open_data.imd` module loads UK deprivation data, keyed on ONS geography
 codes so it joins to [boundaries](geo.md) and [statistics](ons.md).
 
 **A single nation returns that nation's _official_ index. `"UK"` returns a
@@ -1778,7 +3365,7 @@ comparison, and a nation's official index for within-nation work.
 ## `load_imd()`
 
 ```python
-from kindtech import load_imd
+from uk_open_data import load_imd
 
 england = load_imd(nation="England")          # official IoD 2025, 2021 LSOAs
 england_19 = load_imd(nation="England", year=2019)  # official IoD 2019, 2011 LSOAs
@@ -1844,6 +3431,31 @@ Use this only when comparing areas in different nations; its `imd_rank` /
 `imd_decile` are the UK re-ranking, not a nation's official figures (those are
 in `nation_decile`, or use the single-nation calls above).
 
+## Keeping the English index on this machine
+
+`load_imd(nation="England")` downloads the published file from gov.uk the
+first time a program asks for it. To run with no download, keep a copy in the
+data folder, the same one that holds the
+[postcode table](postcodes.md#looking-up-postcodes-on-this-machine):
+
+```python
+from uk_open_data.imd import download_imd, imd_path, keep_imd, load_imd
+
+download_imd()            # fetch the 2025 index once, when a server is built
+imd_path()                # where the copy is, or None
+
+load_imd(nation="England")   # reads the copy; nothing is downloaded
+```
+
+`keep_imd(table, note)` keeps a table of your own in its place, for a
+demonstration or a test. Give a DataFrame or a list of row dictionaries with
+at least `geography_code`, `geography_name`, `lad_code`, `lad_name`,
+`imd_decile` and `population`. Columns you leave out come back empty. The
+`note` says where the figures came from, and `kept_imd_note()` reads it back.
+
+Pass `year=2019` to any of these for the 2019 index. Only the English index
+can be kept. A `url` given to `load_imd` is always downloaded.
+
 ## Joining to boundaries and statistics
 
 `geography_code` matches the rest of KindTech, so deprivation overlays onto a map
@@ -1851,7 +3463,7 @@ or merges with population for per-capita work:
 
 ```python
 import pandas as pd
-from kindtech import load_imd, load_geodata, geodata_to_properties
+from uk_open_data import load_imd, load_geodata, geodata_to_properties
 
 imd = load_imd(nation="England")  # IoD 2025, on 2021 LSOAs
 # Default boundaries are 2021 LSOAs — a native join, no crosswalk
@@ -1882,7 +3494,7 @@ underlying national indices are Open Government Licence v3.0. See
 
 # ONS Statistics
 
-The `kindtech.ons` module provides access to UK statistics from the [ONS NOMIS API](https://www.nomisweb.co.uk/api/v01/help). Returns DataFrames in your preferred backend (pandas or polars) via [narwhals](https://narwhals-dev.github.io/narwhals/).
+The `uk_open_data.ons` module provides access to UK statistics from the [ONS NOMIS API](https://www.nomisweb.co.uk/api/v01/help). Returns DataFrames in your preferred backend (pandas or polars) via [narwhals](https://narwhals-dev.github.io/narwhals/).
 
 ## Functions
 
@@ -1891,7 +3503,7 @@ The `kindtech.ons` module provides access to UK statistics from the [ONS NOMIS A
 Load statistical data from the NOMIS API.
 
 ```python
-from kindtech.ons import load_ons
+from uk_open_data.ons import load_ons
 
 # Basic usage
 df = load_ons("NM_1_1")
@@ -1953,7 +3565,7 @@ DataFrame (pandas or polars, depending on what's installed). If both are availab
 Browse available NOMIS datasets.
 
 ```python
-from kindtech.ons import list_tables
+from uk_open_data.ons import list_tables
 
 # List all 1,615 datasets
 all_tables = list_tables()
@@ -1978,7 +3590,7 @@ DataFrame with columns: `id`, `name`, `sourceName`.
 
 ## Bring Your Own DataFrame
 
-The ONS module uses [narwhals](https://narwhals-dev.github.io/narwhals/) for DataFrame interoperability. Install your preferred backend alongside kindtech:
+The ONS module uses [narwhals](https://narwhals-dev.github.io/narwhals/) for DataFrame interoperability. Install your preferred backend alongside uk-open-data:
 
 ```bash
 uv add pandas   # or polars
@@ -1988,7 +3600,7 @@ The return type automatically matches your installed backend:
 
 ```python
 import polars as pl
-from kindtech.ons import load_ons
+from uk_open_data.ons import load_ons
 
 df = load_ons("NM_1_1", time="latest")
 assert isinstance(df, pl.DataFrame)  # polars preferred when both installed
@@ -2010,7 +3622,7 @@ assert isinstance(df, pl.DataFrame)  # polars preferred when both installed
 
 # Postcodes
 
-The `kindtech.postcodes` module turns UK postcodes (and postcode outcodes) into
+The `uk_open_data.postcodes` module turns UK postcodes (and postcode outcodes) into
 the ONS geography codes the rest of KindTech joins on. It wraps
 [postcodes.io](https://postcodes.io/) — no API key required.
 
@@ -2026,7 +3638,7 @@ OA, LAD, ward, ICB or TTWA — that joins straight to boundaries
 Map postcodes to a single geography level, ready to join.
 
 ```python
-from kindtech import postcodes_to_geography
+from uk_open_data import postcodes_to_geography
 
 located = postcodes_to_geography(["SE13 7HX", "SE6 4RU"], geography_type="LSOA")
 #    postcode geography_code geography_name
@@ -2040,7 +3652,7 @@ result merges directly:
 
 ```python
 import pandas as pd
-from kindtech import postcodes_to_geography, load_geodata, load_ons, geodata_to_properties
+from uk_open_data import postcodes_to_geography, load_geodata, load_ons, geodata_to_properties
 
 # 1. Postcodes -> counts per LSOA
 located = postcodes_to_geography(postcodes, "LSOA")
@@ -2064,7 +3676,7 @@ Supported `geography_type` values: `LSOA`, `MSOA`, `OA`, `LAD`, `WD`, `ICB`,
 The full lookup — one row per postcode with every geography level at once.
 
 ```python
-from kindtech import lookup_postcodes
+from uk_open_data import lookup_postcodes
 
 df = lookup_postcodes(["SE13 7HX", "M1 1AE", "NOTAPC"])
 ```
@@ -2085,7 +3697,7 @@ outcode spans many areas, so this returns the *list* of Local Authorities it
 touches plus the outcode's geometric centroid.
 
 ```python
-from kindtech import lookup_outcodes
+from uk_open_data import lookup_outcodes
 
 lookup_outcodes(["SE13", "M1"])
 #   outcode  valid      admin_districts   latitude  longitude
@@ -2100,7 +3712,7 @@ Columns: `outcode`, `valid`, `admin_districts` (comma-separated LAD names),
 Approximate an outcode to a single geography via its centroid.
 
 ```python
-from kindtech import outcode_to_geography
+from uk_open_data import outcode_to_geography
 
 outcode_to_geography(["SE13"], geography_type="LSOA")
 #   outcode geography_code geography_name
@@ -2115,9 +3727,72 @@ outcode_to_geography(["SE13"], geography_type="LSOA")
     or split an outcode's records across its constituent areas weighted by
     population.
 
+## Looking up postcodes on this machine
+
+The functions above send postcodes to postcodes.io. When the postcodes belong
+to the people a charity helps, you may not want them to leave your machine.
+The postcode table lets you look them up locally instead.
+
+The table is one file of a few megabytes that maps every postcode in
+England and Wales to its 2021 LSOA and local authority. It is built from the
+ONS best-fit postcode lookup. Fetch it once:
+
+```bash
+uk-open-data postcodes download
+```
+
+!!! note "Before the first table is published"
+    The first table is published with version 0.2. Until then
+    `postcodes download` has nothing to fetch on its own: build a table from
+    the ONS lookup with `uk-open-data postcodes build`, host it, and pass
+    `--url` and `--sha256`.
+
+or from Python with `download_postcode_table()`. The file is public and the
+same for everyone, so fetching it says nothing about your data, and it is
+checked against a SHA-256 before it is installed. After that, nothing below
+uses the network:
+
+```python
+from uk_open_data.postcodes import (
+    district_to_local_authorities,
+    postcode_to_lsoa,
+    postcodes_to_local_authority,
+    postcodes_to_lsoa,
+)
+
+postcode_to_lsoa("se13 7vc")                # an LSOA code, or None
+postcodes_to_lsoa(["SE13 7VC", "M1 1VC"])   # one answer per postcode, in order
+postcodes_to_local_authority(["SE13 7VC"])  # local authority codes, in order
+district_to_local_authorities("SE13")       # local authority codes, sorted
+```
+
+| Function | What it does |
+| --- | --- |
+| `download_postcode_table()` | Fetches and installs the table. Pass `url=` and `sha256=` to use a copy you host |
+| `postcode_table_path()` | The installed table's path, or `None` |
+| `postcode_table_info()` | Edition, source, coverage, size and the credits to show |
+| `postcode_to_lsoa()`, `postcodes_to_lsoa()` | Postcode to 2021 LSOA code, or `None` when it is not in the table |
+| `postcodes_to_local_authority()` | Postcode to local authority code, or `None` when it is not in the table |
+| `district_to_local_authorities()` | The local authorities a postcode district reaches into |
+| `build_postcode_table()` | Builds a table from the ONS lookup file. Used to publish a new edition |
+
+The table lives in `~/.cache/uk-open-data`, or in the folder named by the
+`UK_OPEN_DATA_DIR` environment variable. The old names, `~/.cache/kindtech`
+and `KINDTECH_DATA_DIR`, still work. A server should fetch it when it is
+built, not when a request arrives.
+
+!!! note "Coverage and credits"
+    The table covers England and Wales. Scotland and Northern Ireland are left
+    out: neither has 2021 LSOAs, and Northern Ireland postcodes need a separate
+    licence for commercial use. When you publish something made with the table,
+    show the credits from `postcode_table_info()["attribution"]`: the ONS
+    source line, and the OS and Royal Mail copyright lines.
+
+[Analyses](analyses.md) use the table on their own when one is installed.
+
 ## Design
 
-`kindtech.postcodes` is a thin runtime wrapper — unlike the `geo` and `ons`
+`uk_open_data.postcodes` is a thin runtime wrapper — unlike the `geo` and `ons`
 modules it ships no catalog and has no ingestion step, because postcodes.io
 serves the lookup directly. Requests are batched (100 postcodes per call, the
 postcodes.io limit) and results preserve input order. DataFrames come back in
@@ -2132,56 +3807,75 @@ licensing, and limits.
 
 # Package FAQ
 
-## Is this `kindtech.geo`, and can we keep developing more subpackages?
+## Is this `uk_open_data.geo`, and can we keep developing more subpackages?
 
-**Short answer:** `kindtech` is the package installed from PyPI. It includes
-`kindtech.geo`, `kindtech.ons`, `kindtech.postcodes`, and `kindtech.imd`.
-Each subpackage has its own Python import path, but all share one package
-version and release.
+**Short answer:** `uk-open-data` is the package installed from PyPI, and
+`uk_open_data` is the name it is imported by. It includes `uk_open_data.geo`,
+`uk_open_data.ons`, `uk_open_data.postcodes`, and `uk_open_data.imd`. Each
+subpackage has its own Python import path, but all share one package version
+and release.
 
 ```bash
-uv add kindtech
+uv add uk-open-data
 ```
 
 ```python
-from kindtech.geo import load_geodata
-from kindtech.ons import load_ons
+from uk_open_data.geo import load_geodata
+from uk_open_data.ons import load_ons
 ```
 
-New modules can be added under `src/kindtech/<name>/` and included in future
-`kindtech` releases. Because they remain inside the same distribution, they do
+The package was called `kindtech` up to version 0.1. The `kindtech` project on
+PyPI is kept for that name: installing or upgrading it installs the same
+version of `uk-open-data`, and code that imports `kindtech` still works and
+gives a deprecation warning. `kindtech.geo` is the same module as
+`uk_open_data.geo`. Installing `uk-open-data` alone does not add the old import
+name.
+
+New modules can be added under `src/uk_open_data/<name>/` and included in future
+`uk-open-data` releases. Because they remain inside the same distribution, they do
 not need separate PyPI registrations. Add tests and API documentation alongside
 each new module, and include any bundled data in the package configuration.
 
 ### Sources
 
 - [API reference](../api/index.md): available modules and their imports.
-- [Package configuration](https://github.com/KindTechUK/kindtech/blob/v0.1.0/pyproject.toml): one distribution name and version.
-- [Released package tree](https://github.com/KindTechUK/kindtech/tree/v0.1.0/src/kindtech): subpackages included in 0.1.0.
+- [Package configuration](https://github.com/KindTechUK/uk-open-data/blob/v0.1.0/pyproject.toml): one distribution name and version.
+- [Released package tree](https://github.com/KindTechUK/uk-open-data/tree/v0.1.0/src/kindtech): subpackages included in 0.1.0.
 
 Check the package configuration and tagged source tree when the package layout
 changes or a new release adds modules.
 
 _Created: 2026-09-20 · Updated: 2026-09-20 · Verified: 2026-09-20 · Scope/version: 0.1.0_
 
-## Does KindTech still need to be registered on PyPI?
+## Which projects on PyPI does a release publish?
 
-**Short answer:** No. [KindTech 0.1.0 is published on PyPI](https://pypi.org/project/kindtech/0.1.0/).
-Its first successful Trusted Publishing run created the project.
+**Short answer:** Two, from one tag. `uk-open-data` is the package.
+[`kindtech`](https://pypi.org/project/kindtech/) is its old name: a small
+distribution that depends on the same version of `uk-open-data` and holds the
+`kindtech` import name.
 
-Future releases use the existing GitHub workflow and PyPI publisher. Update the
-package version, complete the release checks, and push the corresponding `v*`
-tag when the release is approved. The workflow checks that the tag and package
-version match before publishing the wheel and source distribution.
+Both use Trusted Publishing from the release workflow, so each project on PyPI
+needs its own trusted publisher that names this repository, the workflow file
+`release.yml` and the environment `pypi`. For `uk-open-data`, a pending
+publisher creates the project on the first release. `kindtech` was created by
+the 0.1.0 release and needs a publisher that names the repository as it is
+called now.
+
+To release, set the same version in `pyproject.toml` and in
+`packaging/kindtech/pyproject.toml` (twice there: its own version and the
+version of `uk-open-data` it depends on), complete the release checks, and push
+the matching `v*` tag when the release is approved. The workflow checks that
+the tag and both versions match, publishes `uk-open-data`, then `kindtech`.
 
 ### Sources
 
-- [Successful first release](https://github.com/KindTechUK/kindtech/actions/runs/35527839991): the build and Trusted Publishing run.
-- [Release workflow](https://github.com/KindTechUK/kindtech/blob/v0.1.0/.github/workflows/release.yml): tag/version checks and publication steps.
+- [Release workflow](https://github.com/KindTechUK/uk-open-data/blob/main/.github/workflows/release.yml): the checks and the two publishing jobs.
+- [The old name's package](https://github.com/KindTechUK/uk-open-data/tree/main/packaging/kindtech): what the `kindtech` distribution holds.
+- [First release, 0.1.0](https://pypi.org/project/kindtech/0.1.0/): published as `kindtech`.
 
-Recheck the PyPI project and workflow configuration before a future release.
+Recheck the two PyPI projects and their publishers before a release.
 
-_Created: 2026-09-20 · Updated: 2026-09-20 · Verified: 2026-09-20 · Scope/version: 0.1.0_
+_Created: 2026-09-20 · Updated: 2026-11-19 · Verified: 2026-11-19 (builds and installs; no release has run yet) · Scope/version: 0.2_
 
 
 # Blog
@@ -2288,15 +3982,15 @@ KindTech is a lightweight Python library for accessing UK public data. It wraps 
 
 ## Getting Started
 
-Install [KindTech from PyPI](https://pypi.org/project/kindtech/):
+Install [uk-open-data from PyPI](https://pypi.org/project/uk-open-data/):
 
 ```bash
-uv add kindtech
+uv add uk-open-data
 ```
 
 ```python
-from kindtech.geo import load_geodata
-from kindtech.ons import load_ons, list_tables
+from uk_open_data.geo import load_geodata
+from uk_open_data.ons import load_ons, list_tables
 
 # Load Local Authority District boundaries (GeoJSON)
 boundaries = load_geodata(geography_type="LAD", coverage="UK")

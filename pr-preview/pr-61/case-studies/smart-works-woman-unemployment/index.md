@@ -78,17 +78,17 @@ Smart Works needed to identify gaps in their service provision and optimize thei
 ### Reproduction
 
 A runnable, end-to-end reproduction lives in
-[`examples/smart_works_unemployment.py`](https://github.com/KindTechUK/kindtech/blob/main/examples/smart_works_unemployment.py)
+[`examples/smart_works_unemployment.py`](https://github.com/KindTechUK/uk-open-data/blob/main/examples/smart_works_unemployment.py)
 (a [marimo](https://marimo.io/) notebook). It uses only the public KindTech
 API plus a deterministic synthetic client list (the real client records are
 private):
 
-[![Open in marimo](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/kindtech/blob/main/examples/smart_works_unemployment.py)
+[![Open in marimo](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/KindTechUK/uk-open-data/blob/main/examples/smart_works_unemployment.py)
 &nbsp;— run it live in the browser (the molab cloud runtime fetches real ONS
 data), or locally with `uv run marimo edit examples/smart_works_unemployment.py`.
 
 ```python
-from kindtech import geodata_to_properties, load_geodata, load_ons
+from uk_open_data import geodata_to_properties, load_geodata, load_ons
 
 # Female, unemployed, by age band, all LADs — Census 2021 table RM024
 unemp = load_ons(
