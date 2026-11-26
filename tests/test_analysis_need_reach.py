@@ -1044,6 +1044,16 @@ def test_no_postcode_reaches_the_result(nomis):
 # --- the map ---------------------------------------------------------------
 
 
+def test_map_by_count_says_why_when_residents_are_missing_for_a_place(nomis):
+    # The residents were fetched, but one place has none, so there is no rate.
+    nomis.residents = {**RESIDENTS, "Adur": 0}
+    result = _run_wide(_counts(Lewisham=60, Greenwich=30, Adur=10))
+    assert result.map.layers[0].label == "People in need"
+    choice = next(c for c in result.choices if c.id == "map_need")
+    assert "kept on this machine" not in choice.reason
+    assert "not known for every local authority" in choice.reason
+
+
 def test_map_is_described_by_local_authority(nomis):
     nomis.residents = RESIDENTS
     result = _run_wide(

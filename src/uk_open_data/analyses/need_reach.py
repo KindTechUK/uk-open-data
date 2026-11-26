@@ -354,7 +354,9 @@ def run(analysis_input: AnalysisInput) -> AnalysisResult:
         working=tuple(trail.working),
         choices=(
             *trail.choices,
-            *_choices(measure, compared, top, threshold, by_rate),
+            *_choices(
+                measure, compared, top, threshold, by_rate, residents is not None
+            ),
         ),
         checks=_checks(analysis_input.mode.name, measure, compared),
         caveats=(*_caveats(words), measure.caveat),
@@ -948,7 +950,12 @@ def _answer_for_one_place(reach: float | None, per: str) -> str:
 
 
 def _choices(
-    measure: Measure, compared: Compared, top: int, threshold: int, by_rate: bool
+    measure: Measure,
+    compared: Compared,
+    top: int,
+    threshold: int,
+    by_rate: bool,
+    residents_loaded: bool,
 ) -> tuple[Choice, ...]:
     """List the choices the analysis made."""
     words = need_words(measure.id == RESIDENTS.id)
@@ -956,13 +963,7 @@ def _choices(
         id="map_need",
         label=f"How the map shades {words.topic}",
         value=_by_count(words)[0],
-        reason=(
-            "The need is every resident, so there is no rate to work out."
-            if measure.id == RESIDENTS.id
-            else "The need figures are kept on this machine and no copy of the "
-            "residents is kept beside them, so there is nothing to set the "
-            "count against. Keep the residents too and the map goes by rate."
-        ),
+        reason=_why_by_count(measure, residents_loaded),
     )
     if by_rate:
         shading = Choice(
@@ -1013,6 +1014,22 @@ def _choices(
             option="suppress_below",
         ),
         shading,
+    )
+
+
+def _why_by_count(measure: Measure, residents_loaded: bool) -> str:
+    """Say why the map shades need by its count and not by a rate."""
+    if measure.id == RESIDENTS.id:
+        return "The need is every resident, so there is no rate to work out."
+    if residents_loaded:
+        return (
+            "The residents are not known for every local authority in the "
+            "area, so the map goes by the count rather than mix rates and counts."
+        )
+    return (
+        "The need figures are kept on this machine and no copy of the "
+        "residents is kept beside them, so there is nothing to set the "
+        "count against. Keep the residents too and the map goes by rate."
     )
 
 
