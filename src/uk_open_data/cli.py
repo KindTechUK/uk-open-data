@@ -361,7 +361,12 @@ def _read_rows(path: Path, sheet: str | None) -> list[dict[str, Any]]:
     suffix = path.suffix.lower()
     if suffix == ".csv":
         with path.open(newline="", encoding="utf-8-sig") as handle:
-            return list(csv.DictReader(handle))
+            # A row with more cells than headings puts the extra cells under
+            # the key None. They belong to no column, so they are left out.
+            return [
+                {key: value for key, value in row.items() if key is not None}
+                for row in csv.DictReader(handle)
+            ]
     if suffix in SPREADSHEET_SUFFIXES:
         content = path.read_bytes()
         return read_spreadsheet_rows(content, sheet or _first_sheet(content))

@@ -466,6 +466,16 @@ def test_an_unknown_map_layer_is_refused_before_anything_is_fetched(
     fetch.assert_not_called()
 
 
+def test_a_csv_row_with_more_cells_than_headings_is_read(index, tmp_path, capsys):
+    path = tmp_path / "counts.csv"
+    path.write_text(
+        "Area,Clients\nE01000001,30,extra\nE01000002,12\n", encoding="utf-8"
+    )
+    args = ["analysis", "run", ANALYSIS_ID, str(path), "--column", "lsoa_code=Nope"]
+    assert main(args) == EXIT_INPUT_ERROR
+    assert "The column 'Nope' given for 'lsoa_code'" in capsys.readouterr().err
+
+
 def test_outlines_that_match_no_area_leave_the_report(
     index, counts_file, tmp_path, capsys
 ):
