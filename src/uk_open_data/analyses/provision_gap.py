@@ -492,7 +492,11 @@ def _rows(
             f"Check {said('catchment')}."
         )
         raise AnalysisInputError(msg, option="catchment")
-    _warn_about_area(sum(located.values()) - inside, with_provision, compared, trail)
+    # Added up from the places outside, not taken from the total, so that the
+    # order floats are added in cannot leave a crumb of provision outside.
+    in_area = set(compared.codes)
+    outside = sum(amount for code, amount in located.items() if code not in in_area)
+    _warn_about_area(outside, with_provision, compared, trail)
     require_some_need(need, compared.label)
     cut = high_need_cut(need)
     high = [amount >= cut and amount > 0 for amount in need]
