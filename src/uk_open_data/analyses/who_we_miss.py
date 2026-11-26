@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from collections import Counter
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
@@ -61,7 +61,7 @@ from uk_open_data.analyses._steps import (
     read_threshold,
     use_postcode_table,
 )
-from uk_open_data.analyses.sources import nomis_table
+from uk_open_data.analyses.sources import KEPT_COPY_USED, kept_copy, nomis_table
 from uk_open_data.ons import load_ons
 
 ANALYSIS_ID = "who-we-miss"
@@ -468,11 +468,8 @@ def _load_residents(characteristic: _Characteristic, trail: Trail) -> _Residents
         )
         raise AnalysisInputError(msg) from error
     if residents is not None:
-        source = replace(
-            source,
-            edition=f"{source.edition}. A copy kept on this machine, {residents.note}",
-        )
-        where = "A copy kept on this machine was used, so nothing was fetched."
+        source = kept_copy(source, residents.note)
+        where = KEPT_COPY_USED
     else:
         try:
             residents = _fetch_residents(characteristic.id)

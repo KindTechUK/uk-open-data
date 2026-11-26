@@ -8,7 +8,7 @@ the result against the English Indices of Deprivation 2025.
 from __future__ import annotations
 
 from collections import Counter
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
@@ -59,7 +59,7 @@ from uk_open_data.analyses._steps import (
     use_postcode_table,
     which_entries,
 )
-from uk_open_data.analyses.sources import IOD_2025
+from uk_open_data.analyses.sources import IOD_2025, kept_copy
 from uk_open_data.imd import imd_path, kept_imd_note, load_imd
 
 ANALYSIS_ID = "reach-deprivation"
@@ -307,8 +307,7 @@ def _load_areas(trail: Trail) -> dict[str, _Area]:
     if note is None:
         trail.sources.append(IOD_2025)
     else:
-        edition = f"{IOD_2025.edition}. A copy kept on this machine, {note}"
-        trail.sources.append(replace(IOD_2025, edition=edition))
+        trail.sources.append(kept_copy(IOD_2025, note))
         trail.working.append(
             Step(
                 title="Read the deprivation index kept on this machine",

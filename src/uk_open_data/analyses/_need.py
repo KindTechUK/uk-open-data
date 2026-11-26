@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
@@ -30,7 +30,7 @@ from uk_open_data.analyses._steps import (
     plural,
     where_rows,
 )
-from uk_open_data.analyses.sources import nomis_table
+from uk_open_data.analyses.sources import KEPT_COPY_USED, kept_copy, nomis_table
 from uk_open_data.ons import load_ons
 
 DEFAULT_TOP = 10
@@ -296,14 +296,7 @@ def _kept_or_fetched(
     """
     if kept is not None:
         rows, note = kept
-        cited = replace(
-            source, edition=f"{source.edition}. A copy kept on this machine, {note}"
-        )
-        return (
-            rows,
-            cited,
-            "A copy kept on this machine was used, so nothing was fetched.",
-        )
+        return rows, kept_copy(source, note), KEPT_COPY_USED
     try:
         rows = _fetch_need(measure.dataset, json.dumps(measure.filters, sort_keys=True))
     except (TypeError, ValueError) as error:
