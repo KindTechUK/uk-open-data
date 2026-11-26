@@ -204,7 +204,10 @@ def test_to_count_accepts_whole_numbers(raw, expected):
     assert to_count(raw) == expected
 
 
-@pytest.mark.parametrize("raw", [-1, 2.5, "many", None, "", True, float("nan")])
+@pytest.mark.parametrize(
+    "raw",
+    [-1, 2.5, "many", None, "", True, float("nan"), float("inf"), "inf", "1e400"],
+)
 def test_to_count_rejects_everything_else(raw):
     assert to_count(raw) is None
 

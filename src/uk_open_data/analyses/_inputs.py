@@ -50,7 +50,7 @@ def to_count(value: Any) -> int | None:
         number = float(str(value).replace(",", "").strip())
     except ValueError:
         return None
-    if math.isnan(number) or number < 0 or number != int(number):
+    if not math.isfinite(number) or number < 0 or number != int(number):
         return None
     return int(number)
 
