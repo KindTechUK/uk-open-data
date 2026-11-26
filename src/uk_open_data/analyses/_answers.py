@@ -137,20 +137,31 @@ def look_first(
     )
 
 
-def not_counted(supplied: int, located: int, counted: int) -> str:
+def not_counted(supplied: int | None, located: int | None, counted: int) -> str:
     """Say how many people an answer leaves out, when it is a large share.
 
     People who could not be placed at all are a mistake in the data to put
     right. People who live outside the area are not. So when there are both,
     the sentence says how many of each. It starts with a space so it can
     follow another.
+
+    A total hidden so that a few people left out cannot be worked out is
+    ``None``. The sentence then goes by the people placed, and says nothing
+    when they are hidden too.
     """
+    if supplied is None:
+        if located is None or located - counted < LARGE_SHARE_LEFT_OUT * located:
+            return ""
+        return (
+            f" {number(located - counted)} of the {number(located)} people placed "
+            f"in a local authority live outside {AREA} and are not counted."
+        )
     left_out = supplied - counted
     if left_out < LARGE_SHARE_LEFT_OUT * supplied:
         return ""
-    unplaced, outside = supplied - located, located - counted
     opening = f" {number(left_out)} of the {number(supplied)} people in your data"
-    if unplaced and outside:
+    if located is not None and supplied - located and located - counted:
+        unplaced, outside = supplied - located, located - counted
         return (
             f"{opening} are not counted: {number(unplaced)} could not be "
             f"placed in a local authority, and {number(outside)} live outside "

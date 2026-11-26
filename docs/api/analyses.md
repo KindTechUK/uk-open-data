@@ -613,6 +613,13 @@ by saying how many are not counted. When some of them could not be placed in
 any local authority, which is a name or a postcode to put right, and others
 live outside the area, which is not a mistake, it says how many of each.
 
+The people left out are counted like any group. When fewer than 5 live
+outside the area you serve, or fewer than 5 could not be placed, the warnings
+and the working say "fewer than 5". `people_located` and `people_supplied`
+are then hidden when taking one total from another would give that number
+away. `people_in_catchment` is always shown, because every figure is about
+those people. The answer goes by the totals that are shown.
+
 When only one local authority is compared every share is 100%, so
 `key_figures` names the rate and the two counts behind it instead:
 `reach_per_100_in_need`, `people_in_catchment` and `people_in_need`.

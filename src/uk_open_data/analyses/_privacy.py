@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from dataclasses import dataclass
+
+from uk_open_data.analyses._model import Figure
+
 DEFAULT_SUPPRESS_BELOW = 5
 # Every analysis says this in its privacy notes, so a reader does not take every
 # hidden count for a small one.
@@ -10,11 +15,88 @@ SECOND_COUNT_NOTE = (
     "small, a second is hidden with it, so the first cannot be worked out "
     "from the total."
 )
+# The analyses about people say this in their privacy notes too.
+LEFT_OUT_NOTE = (
+    "People left out, such as those who live outside the area you serve, are "
+    "counted like any group. When they are few, their number is not given, "
+    "and a total that would give it away is hidden."
+)
+HIDDEN_TOTAL = "Hidden so a small number of people left out cannot be worked out."
 
 
 def is_small(count: int, threshold: int) -> bool:
     """Return True when a count is above zero but below the threshold."""
     return 0 < count < threshold
+
+
+@dataclass(frozen=True)
+class LeftOut:
+    """How totals of people, and the people left out of them, may be shown.
+
+    Made by :func:`hide_totals`. A hidden total never has the value of a
+    total that is shown, so a total is known by its value.
+    """
+
+    threshold: int
+    hidden: frozenset[int] = frozenset()
+
+    def total(self, count: int) -> int | None:
+        """A total as it may be shown: itself, or None when it is hidden."""
+        return None if count in self.hidden else count
+
+    def count(self, count: int) -> str:
+        """A count of people left out as it may be said: "12" or "fewer than 5"."""
+        return (
+            f"fewer than {self.threshold}"
+            if is_small(count, self.threshold)
+            else str(count)
+        )
+
+    def figure(self, figure_id: str, label: str, count: int, note: str = "") -> Figure:
+        """A figure for a total of people, hidden like any other when it must be."""
+        if self.total(count) is None:
+            return Figure(
+                figure_id, label, None, "people", note=HIDDEN_TOTAL, suppressed=True
+            )
+        return Figure(figure_id, label, count, "people", note=note)
+
+
+def hide_totals(
+    base: int, left_out: Sequence[Sequence[int]], threshold: int
+) -> LeftOut:
+    """Decide which totals of people to hide, so nobody left out can be found.
+
+    The totals are nested. The first is the base, the people the figures are
+    about, and it is always shown. Each total after it adds people who are
+    left out: those outside the area you serve, say, or those who could not be
+    placed. Each group left out is a cell, so a small one is never given as a
+    number.
+
+    Going from the base out, a total is shown when its difference from every
+    total shown so far is 0 or at least the threshold. It is hidden too when
+    the groups it adds since the last total shown hold exactly one small
+    count, because the others are given exactly and would give that one away.
+
+    Args:
+        base: The people the figures are about.
+        left_out: For each total after the base, the counts of the groups of
+            people it adds, each given on its own in a warning or the working.
+        threshold: Counts above zero and below this are small.
+    """
+    kept = [base]
+    since: list[int] = []
+    hidden: set[int] = set()
+    total = base
+    for groups in left_out:
+        total += sum(groups)
+        since += groups
+        alone = sum(is_small(count, threshold) for count in since) == 1
+        if alone or any(is_small(total - shown, threshold) for shown in kept):
+            hidden.add(total)
+        else:
+            kept.append(total)
+            since = []
+    return LeftOut(threshold, frozenset(hidden))
 
 
 def cells_to_hide(

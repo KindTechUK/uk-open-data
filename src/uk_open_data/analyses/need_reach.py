@@ -80,9 +80,12 @@ from uk_open_data.analyses._need import download_need_figures as download_need_f
 from uk_open_data.analyses._need import keep_need_figures as keep_need_figures
 from uk_open_data.analyses._need import need_figures_path as need_figures_path
 from uk_open_data.analyses._privacy import (
+    LEFT_OUT_NOTE,
     SECOND_COUNT_NOTE,
+    LeftOut,
     cells_to_hide,
     group_hidden,
+    hide_totals,
 )
 from uk_open_data.analyses._steps import (
     EVERYWHERE,
@@ -91,10 +94,12 @@ from uk_open_data.analyses._steps import (
     NOT_A_COUNT,
     POSTCODE_LOOKUP,
     SUPPRESS_BELOW,
+    Placed,
     Trail,
     bad_counts,
     before_rounding,
-    count_by_postcode,
+    find_postcodes,
+    note_placed,
     percent,
     plural,
     read_min_share,
@@ -306,26 +311,36 @@ def run(analysis_input: AnalysisInput) -> AnalysisResult:
     trail = Trail()
     authorities = load_need(measure, trail)
     residents = _residents(measure, trail)
+    given: Placed | _Given
     if analysis_input.mode.name == "postcodes":
-        counts, supplied = count_by_postcode(
+        given = find_postcodes(
             analysis_input.values["postcode"],
             use_postcode_table(options),
             trail,
             LOCAL_AUTHORITY,
         )
     else:
-        counts, supplied = _count_by_authority(
+        given = _read_by_authority(
             analysis_input.values["local_authority"],
             analysis_input.values["count"],
             authorities,
-            trail,
         )
-    located = _keep_listed(counts, authorities, threshold, trail)
+    located = _keep_listed(given.counts, authorities, threshold)
     compared = _choose_area(options.get("catchment"), located, authorities, min_share)
+    # Nothing that counts people is written until the totals that would give
+    # away a few people left out are known.
+    privacy = _left_out(given, located, compared, threshold)
+    if isinstance(given, Placed):
+        note_placed(given, trail, privacy)
+    else:
+        _note_by_authority(given, privacy, trail)
+    _note_listed(given.counts, located, privacy, trail)
     words = need_words(measure.id == RESIDENTS.id)
-    rows = _rows(located, authorities, compared, residents, threshold, words, trail)
+    rows = _rows(located, authorities, compared, residents, words, privacy, trail)
     by_rate = rows[0].need_rate is not None
-    figures = _figures(supplied, sum(located.values()), rows, words, measure, threshold)
+    figures = _figures(
+        given.supplied, sum(located.values()), rows, words, measure, privacy
+    )
     tables = (
         _priority_table(rows, top, threshold, words, trail),
         _authority_table(rows, words),
@@ -336,9 +351,10 @@ def run(analysis_input: AnalysisInput) -> AnalysisResult:
         Step(
             title="Hid small counts",
             detail=(
-                f"Counts from 1 to {threshold - 1} for a named local authority "
-                "were hidden, along with anything that would let them be "
-                f"worked out. {trail.hidden} cells or figures were hidden."
+                f"Counts from 1 to {threshold - 1} for a named local authority, "
+                "or of people left out, were hidden, along with anything that "
+                f"would let them be worked out. {trail.hidden} cells or figures "
+                "were hidden."
             ),
         )
     )
@@ -386,13 +402,28 @@ def _residents(measure: Measure, trail: Trail) -> dict[str, float] | None:
 # --- reading the input -----------------------------------------------------
 
 
-def _count_by_authority(
+@dataclass(frozen=True)
+class _Given:
+    """The counts given by local authority, as they were read."""
+
+    counts: Counter[str]
+    supplied: int
+    rows: int
+    blank: int
+    not_listed: list[int]
+    # Every person counted has a place, so none is left out before the next step.
+    left_out: tuple[tuple[int, ...], ...] = ()
+
+
+def _read_by_authority(
     places: list[Any],
     counts: list[Any],
     authorities: dict[str, Authority],
-    trail: Trail,
-) -> tuple[Counter[str], int]:
-    """Total the counts given for each local authority name or code."""
+) -> _Given:
+    """Total the counts given for each local authority name or code.
+
+    Nothing is written yet: see :func:`_note_by_authority`.
+    """
     by_key = {code.casefold(): code for code in authorities}
     by_key.update({area.name.casefold(): code for code, area in authorities.items()})
     totals: Counter[str] = Counter()
@@ -411,60 +442,118 @@ def _count_by_authority(
             if code is None:
                 not_listed.append(row)
             totals[code or UNLISTED] += count
-    unknown = len(not_listed)
     if bad:
         raise AnalysisInputError(bad_counts(bad, NOT_A_COUNT), role="count")
-    if blank:
-        trail.warnings.append(f"{plural(blank, 'row')} had no local authority.")
+    return _Given(totals, supplied, len(places), blank, not_listed)
+
+
+def _note_by_authority(given: _Given, privacy: LeftOut, trail: Trail) -> None:
+    """Write how the counts by local authority were read."""
+    unknown = len(given.not_listed)
+    if given.blank:
+        trail.warnings.append(f"{plural(given.blank, 'row')} had no local authority.")
     if unknown:
-        trail.warnings.append(not_listed_rows(not_listed))
+        trail.warnings.append(not_listed_rows(given.not_listed))
+    holding = ""
+    if privacy.total(given.supplied) is not None:
+        holding = f" holding {given.supplied} people"
     trail.working.append(
         Step(
             title="Read the local authority counts",
             detail=(
-                f"{len(places)} rows holding {supplied} people. {blank} rows "
-                f"had no local authority and were left out. {unknown} rows "
-                "named a place the need figures do not list."
+                f"{given.rows} rows{holding}. {given.blank} rows had no local "
+                f"authority and were left out. {unknown} rows named a place "
+                "the need figures do not list."
             ),
-            rows_in=len(places),
-            rows_out=len(places) - blank,
+            rows_in=given.rows,
+            rows_out=given.rows - given.blank,
         )
     )
-    return totals, supplied
 
 
 def _keep_listed(
     counts: Counter[str],
     authorities: dict[str, Authority],
     threshold: int,
-    trail: Trail,
 ) -> dict[str, int]:
-    """Keep the people placed in a local authority the need figures list."""
+    """Keep the people placed in a local authority the need figures list.
+
+    Nothing is written yet: see :func:`_note_listed`.
+    """
     located = {code: n for code, n in counts.items() if code in authorities and n > 0}
     n_located = sum(located.values())
+    if n_located < threshold:
+        outside = sum(counts.values()) - n_located
+        raise AnalysisInputError(_too_few_placed(outside, threshold))
+    return located
+
+
+def _left_out(
+    given: Placed | _Given,
+    located: dict[str, int],
+    compared: Compared,
+    threshold: int,
+) -> LeftOut:
+    """Decide which totals to hide, so a few people left out cannot be found.
+
+    From the people in the area you serve out: those who live outside it,
+    those placed where the need figures do not reach, and then the rows that
+    could not be placed at all.
+
+    Raises:
+        AnalysisInputError: If the area holds no local authority the need
+            figures list, or too few people.
+    """
+    if not compared.codes:
+        msg = (
+            f"The need figures list no local authority in {compared.label}. "
+            f"Check {said('catchment')}."
+        )
+        raise AnalysisInputError(msg, option="catchment")
+    n_inside = sum(located.get(code, 0) for code in compared.codes)
+    if n_inside < threshold:
+        msg = (
+            f"Fewer than {threshold} of the people located live in the area "
+            f"you serve ({compared.label}), which is too few to give figures "
+            f"that do not point at individuals. Check {said('catchment')}."
+        )
+        raise AnalysisInputError(msg, option="catchment")
+    n_located = sum(located.values())
+    outside = (n_located - n_inside,), (sum(given.counts.values()) - n_located,)
+    return hide_totals(n_inside, (*outside, *given.left_out), threshold)
+
+
+def _note_listed(
+    counts: Counter[str], located: dict[str, int], privacy: LeftOut, trail: Trail
+) -> None:
+    """Write how many people were placed where the need figures reach."""
+    n_located = sum(located.values())
     total = sum(counts.values())
-    outside = total - n_located
+    outside = sentence_case(privacy.count(total - n_located))
+    detail = (
+        f"{outside} people live outside England and Wales, or in a local "
+        "authority the need figures do not list."
+    )
+    if privacy.total(n_located) is not None:
+        detail = (
+            f"{n_located} people live in a local authority the need "
+            f"figures list. {outside} live outside England and Wales, or "
+            "in a local authority the figures do not list."
+        )
     trail.working.append(
         Step(
             title="Joined people to the need figures",
-            detail=(
-                f"{n_located} people live in a local authority the need "
-                f"figures list. {outside} live outside England and Wales, or "
-                "in a local authority the figures do not list."
-            ),
-            rows_in=total,
-            rows_out=n_located,
+            detail=detail,
+            rows_in=privacy.total(total),
+            rows_out=privacy.total(n_located),
         )
     )
-    if outside:
+    if total - n_located:
         trail.warnings.append(
             f"{outside} people were placed outside England and Wales, or in a "
             "local authority the need figures do not list (for example one "
             "whose boundary has changed). They are left out."
         )
-    if n_located < threshold:
-        raise AnalysisInputError(_too_few_placed(outside, threshold))
-    return located
 
 
 def _too_few_placed(outside: int, threshold: int) -> str:
@@ -502,49 +591,38 @@ def _rows(
     authorities: dict[str, Authority],
     compared: Compared,
     residents: dict[str, float] | None,
-    threshold: int,
     words: NeedWords,
+    privacy: LeftOut,
     trail: Trail,
 ) -> list[_Row]:
     """Build one row per local authority compared, with small counts marked."""
-    if not compared.codes:
-        msg = (
-            f"The need figures list no local authority in {compared.label}. "
-            f"Check {said('catchment')}."
-        )
-        raise AnalysisInputError(msg, option="catchment")
     people = [located.get(code, 0) for code in compared.codes]
     need = [authorities[code].need for code in compared.codes]
     n_located = sum(located.values())
     n_inside = sum(people)
     with_people = sum(1 for n in people if n > 0)
+    shown = privacy.total(n_located)
+    of_the = "of the" if shown is None else f"of the {shown}"
     trail.working.append(
         Step(
             title="Set the area you serve",
             detail=(
-                f"Area: {compared.label}. {compared.reason} {n_inside} of the "
-                f"{n_located} people located live in it, in {with_people} of "
-                f"its {len(people)} local authorities."
+                f"Area: {compared.label}. {compared.reason} {n_inside} {of_the} "
+                f"people located live in it, in {with_people} of its "
+                f"{len(people)} local authorities."
             ),
-            rows_in=n_located,
+            rows_in=shown,
             rows_out=n_inside,
         )
     )
-    if n_inside < threshold:
-        msg = (
-            f"Fewer than {threshold} of the people located live in the area "
-            f"you serve ({compared.label}), which is too few to give figures "
-            f"that do not point at individuals. Check {said('catchment')}."
-        )
-        raise AnalysisInputError(msg, option="catchment")
-    _warn_about_area(n_located - n_inside, with_people, compared, trail)
+    _warn_about_area(n_located - n_inside, with_people, compared, privacy, trail)
     require_some_need(need, compared.label)
     cut = high_need_cut(need)
     high = [amount >= cut and amount > 0 for amount in need]
     # When one small count needs a second count hidden with it, the smallest
     # is taken, wherever it is. The table of places matters more here than the
     # share in high-need places, which is hidden when it would give one away.
-    hide = cells_to_hide(people, threshold)
+    hide = cells_to_hide(people, privacy.threshold)
     # The map shades need by a rate where it can, so that a large place is
     # not darker for its size alone.
     rates = need_per_1000(compared.codes, authorities, residents)
@@ -579,13 +657,18 @@ def _rows(
 
 
 def _warn_about_area(
-    outside: int, with_people: int, compared: Compared, trail: Trail
+    outside: int,
+    with_people: int,
+    compared: Compared,
+    privacy: LeftOut,
+    trail: Trail,
 ) -> None:
     """Warn when the area looks too wide, too narrow or too small."""
     if outside:
         trail.warnings.append(
-            f"{outside} people live outside the area you serve and are left "
-            f"out. Change {said('catchment')} to include them."
+            f"{sentence_case(privacy.count(outside))} people live outside the "
+            f"area you serve and are left out. Change {said('catchment')} to "
+            "include them."
         )
     if compared.guessed:
         trail.warnings.append(
@@ -804,7 +887,7 @@ def _figures(
     rows: list[_Row],
     words: NeedWords,
     measure: Measure,
-    threshold: int,
+    privacy: LeftOut,
 ) -> list[Figure]:
     """Build the headline figures, in the words that fit the measure."""
     people = [row.people for row in rows]
@@ -812,12 +895,11 @@ def _figures(
     high = tuple(i for i, row in enumerate(rows) if row.high_need)
     in_catchment = sum(people)
     return [
-        Figure("people_supplied", "People in the data you gave", supplied, "people"),
-        Figure(
+        privacy.figure("people_supplied", "People in the data you gave", supplied),
+        privacy.figure(
             "people_located",
             "People placed in a local authority in England or Wales",
             located,
-            "people",
         ),
         Figure(
             "people_in_catchment",
@@ -858,7 +940,7 @@ def _figures(
             sum(1 for i in high if people[i] == 0),
             "areas",
         ),
-        _share_in_high_need(rows, high, words, threshold),
+        _share_in_high_need(rows, high, words, privacy.threshold),
         Figure(
             "share_of_need_in_high_need_areas",
             f"Share of {words.noun} who live in {words.places}",
@@ -1095,6 +1177,7 @@ def _privacy(threshold: int, trail: Trail) -> Privacy:
         notes=(
             "A count is hidden when it is small and is about a named local authority.",
             SECOND_COUNT_NOTE,
+            LEFT_OUT_NOTE,
             "The map shows reach in bands, and the lowest band holds places "
             "with nobody and places with a hidden count.",
             "The need figures are public counts and are shown in full.",
