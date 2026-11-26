@@ -17,15 +17,15 @@ KindTech is a lightweight Python library for accessing UK public data. It wraps 
 
 ## Getting Started
 
-Install [KindTech from PyPI](https://pypi.org/project/kindtech/):
+Install [uk-open-data from PyPI](https://pypi.org/project/uk-open-data/):
 
 ```bash
-uv add kindtech
+uv add uk-open-data
 ```
 
 ```python
-from kindtech.geo import load_geodata
-from kindtech.ons import load_ons, list_tables
+from uk_open_data.geo import load_geodata
+from uk_open_data.ons import load_ons, list_tables
 
 # Load Local Authority District boundaries (GeoJSON)
 boundaries = load_geodata(geography_type="LAD", coverage="UK")

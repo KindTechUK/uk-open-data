@@ -1,8 +1,8 @@
-"""Tests for kindtech.geo._ingestion parsing helpers."""
+"""Tests for uk_open_data.geo._ingestion parsing helpers."""
 
 import pytest
 
-from kindtech.geo._ingestion import (
+from uk_open_data.geo._ingestion import (
     _normalise_month,
     _normalise_resolution,
     _normalise_year,
@@ -129,6 +129,27 @@ def test_parse_long_form_buasd_before_bua() -> None:
     assert r_bua is not None and r_bua["geography"] == "BUA"
 
 
+@pytest.mark.parametrize(
+    ("name", "geography"),
+    [
+        ("Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BGC_V5", "LSOA"),
+        ("Middle_layer_Super_Output_Areas_December_2021_Boundaries_EW_BGC_V3", "MSOA"),
+        ("Built_Up_Area_Sub_2021_EW_BGC", "BUASD"),
+        ("Built_Up_Area_2021_EW_BGC", "BUA"),
+    ],
+)
+def test_parse_long_form_ignores_capitals_in_the_name(
+    name: str, geography: str
+) -> None:
+    """The catalogue writes "Lower_layer" as well as "Lower_Layer"."""
+    result = _parse_long_form(name)
+    assert result is not None
+    assert result["geography"] == geography
+    assert result["year"] == "2021"
+    assert result["region"] == "EW"
+    assert result["resolution"] == "BGC"
+
+
 def test_parse_long_form_no_match() -> None:
     assert _parse_long_form("Unknown_Geo_2021_UK_BFC") is None
 
@@ -163,7 +184,7 @@ def test_parse_service_unparseable() -> None:
 def test_ingest_raises_on_empty_catalog(tmp_path, monkeypatch) -> None:
     """ingest_arcgis_services raises when the API returns no services."""
     monkeypatch.setattr(
-        "kindtech.geo._ingestion._fetch_services",
+        "uk_open_data.geo._ingestion._fetch_services",
         lambda base_url: [],
     )
     with pytest.raises(RuntimeError, match="No services parsed"):
