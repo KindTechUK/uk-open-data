@@ -102,8 +102,9 @@ def picture_for(
     except TimeoutError:
         logger.warning("A map was not drawn: its outlines took too long.")
         return None, TOO_SLOW
-    except (requests.RequestException, ValueError) as error:
-        # The error text can hold a web address, so only its kind is logged.
+    except (requests.RequestException, OSError, ValueError) as error:
+        # The error text can hold a web address or a path, so only its kind
+        # is logged. OSError is for outlines a host reads from its own files.
         logger.warning("A map could not be drawn: %s", type(error).__name__)
         return None, NO_OUTLINES
     layers = _that_fit(layers)
