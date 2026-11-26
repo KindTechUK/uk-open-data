@@ -5,6 +5,8 @@ The deprivation index and the postcode lookup are replaced with small invented
 tables, so the tests are isolated and repeatable.
 """
 
+import csv
+import io
 import json
 import logging
 import unittest.mock as mock
@@ -220,6 +222,14 @@ def test_tabular_data_reads_rows_and_frames_alike():
     assert from_rows.n_rows == from_frame.n_rows == 2
     assert from_rows.values("b") == ["x", None]
     assert from_frame.values("a") == [1, 2]
+
+
+def test_rows_read_from_a_csv_with_more_cells_than_headings_can_be_run():
+    # csv.DictReader puts cells that have no heading under the key None.
+    text = "Client postcode\nSE1 1CC,extra\n"
+    rows = list(csv.DictReader(io.StringIO(text)))
+    with pytest.raises(AnalysisInputError, match=r"Columns found: Client postcode\."):
+        run_analysis(ANALYSIS_ID, rows, columns={"postcode": "Postcode"})
 
 
 def test_tabular_data_rejects_other_types():

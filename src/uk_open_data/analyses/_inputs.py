@@ -63,7 +63,11 @@ class TabularData:
         self._frame: Any = None
         if isinstance(data, list) and all(isinstance(row, Mapping) for row in data):
             self._rows = data
-            self.columns = list(dict.fromkeys(key for row in data for key in row))
+            # csv.DictReader puts the cells of a row that has more cells than
+            # headings under the key None. They belong to no column.
+            self.columns = list(
+                dict.fromkeys(key for row in data for key in row if key is not None)
+            )
             self.n_rows = len(data)
             return
         try:
