@@ -299,6 +299,60 @@ def test_the_picture_is_framed_on_the_shore_not_on_the_water(result):
     assert "10 km" in _texts(render_map(result, boundaries=loose), "ink")
 
 
+def _ground(west: float, south: float, size: float) -> list[list[float]]:
+    """A square of land, as one ring of an outline."""
+    east, north = west + size, south + size
+    return [[west, south], [east, south], [east, north], [west, north], [west, south]]
+
+
+def test_a_speck_is_a_part_under_a_thousandth_of_the_largest():
+    body = _ground(0, 0, 100)
+    island = _ground(200, 0, 4)  # 16 in 10,000: kept
+    speck = _ground(-300, 0, 3)  # 9 in 10,000: a speck
+    assert maps._main([body, island, speck]) == [body, island]
+    # A place that is small all through keeps every part.
+    assert maps._main([speck, _ground(-310, 0, 3)]) == [speck, _ground(-310, 0, 3)]
+    assert maps._main([]) == []
+
+
+def test_a_speck_far_off_does_not_set_the_frame():
+    # The clipped outline of a real city on an estuary holds a bank of about
+    # a hundred metres, 2.5 km west of the rest. Framed on every point, the
+    # city sat off centre.
+    city = _ground(-2.72, 51.40, 0.2)
+    bank = _ground(-2.756, 51.494, 0.0015)
+    plain = maps._View([[city]], 720, 0)
+    assert maps._View([[city, bank]], 720, 0).ground() == plain.ground()
+    # A small place of its own is not a speck of the place beside it.
+    assert maps._View([[city], [bank]], 720, 0).ground() != plain.ground()
+
+
+def test_a_speck_of_the_shore_moves_neither_the_frame_nor_the_name(result):
+    plain = render_map(result, boundaries=_with_a_shore())
+    specked = _with_a_shore()
+    lewisham = specked["surroundings"][0]
+    lewisham["geometry"] = {
+        "type": "MultiPolygon",
+        "coordinates": [
+            lewisham["geometry"]["coordinates"],
+            [_ground(-0.5, 51.42, 0.001)],
+        ],
+    }
+    svg = render_map(result, boundaries=specked)
+
+    def seen(picture: str) -> list:
+        root = ET.fromstring(picture)
+        held = [
+            (text.text, text.get("x"), text.get("y"))
+            for text in root.iter(f"{SVG}text")
+            if text.get("class") == "held"
+        ]
+        return [held, [path.get("d") for path in _paths(picture)]]
+
+    assert seen(svg) == seen(plain)
+    assert _texts(svg, "ink") == _texts(plain, "ink")
+
+
 def test_there_is_no_cut_when_the_shore_has_no_outline(result):
     boundaries = _with_a_shore()
     boundaries["shore"] = ["E09000023", "E09000099"]

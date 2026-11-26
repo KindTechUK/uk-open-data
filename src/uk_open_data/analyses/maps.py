@@ -122,6 +122,9 @@ _FONT = "Arial, Helvetica, sans-serif"
 # The frame leaves this share of the shaded areas' size free on each side,
 # and is never flatter or taller than these heights.
 _ROOM = 0.08
+# A part of a place smaller than this share of its largest part is a speck:
+# a rock or a bank off the shore. It does not set the frame or move a name.
+_SPECK = 0.001
 _MIN_MAP_HEIGHT = 300
 _MAX_MAP_HEIGHT = 560
 _KM_PER_DEGREE = 111.2
@@ -473,7 +476,8 @@ def render_map(
     shore = [ring for rings in land for ring in view.rings(rings)]
     scope = _scope(chosen)
     inside = f' clip-path="url(#{scope}-shore)"' if shore else ""
-    names = _place_names(areas, around, view, shore)
+    mainland = [ring for rings in land for ring in _main(view.rings(rings))]
+    names = _place_names(areas, around, view, mainland)
     key_top = round(view.top + view.height) + 16
     key, note_top = _key(chosen, key_top, width)
     note = _wrap(chosen.note, _letters(width, _NOTE_SIZE))
@@ -559,11 +563,13 @@ class _View:
 
     The shaded areas are in the middle with some room around them, in a frame
     as wide as the picture. The frame is never very flat, so a wide place
-    still shows what is north and south of it.
+    still shows what is north and south of it. A speck of a place far from
+    the rest of it does not widen the frame, which would push the place off
+    centre for the sake of a dot.
     """
 
     def __init__(self, shapes: list[list[Any]], width: int, top: int) -> None:
-        points = [point for rings in shapes for ring in rings for point in ring]
+        points = [point for rings in shapes for ring in _main(rings) for point in ring]
         lons = [point[0] for point in points]
         lats = [point[1] for point in points]
         # A degree of longitude is shorter than a degree of latitude away from
@@ -643,6 +649,31 @@ class _View:
 
 
 _Ring = list[tuple[float, float]]
+
+
+def _main(rings: list[Any]) -> list[Any]:
+    """Return the rings of one place without its specks.
+
+    A speck is a ring with less than a thousandth of the area of the place's
+    largest ring. The outline of a place on a coast can hold a rock or a bank
+    some way off the shore.
+    """
+    sizes = [_area(ring) for ring in rings]
+    least = max(sizes, default=0.0) * _SPECK
+    return [ring for ring, size in zip(rings, sizes, strict=True) if size >= least]
+
+
+def _area(ring: Any) -> float:
+    """Return the area inside a ring, in the units of its points, squared."""
+    return abs(
+        sum(
+            a[0] * b[1] - b[0] * a[1]
+            for a, b in zip(ring, [*ring[1:], *ring[:1]], strict=True)
+        )
+        / 2
+    )
+
+
 # Points of an outline closer together than this, in dots, are not all kept.
 _FINEST = 0.7
 # A place around the map is cut this many dots outside the frame.
@@ -1051,7 +1082,8 @@ def _place_names(
     beside it that is not on another shaded place.
 
     When the areas are drawn inside a shore, the middle is of the part that
-    is drawn, so a name is not put out on the water.
+    is drawn, so a name is not put out on the water. A speck of a place, or
+    of the shore, does not move a name.
     """
     edge = _span([point for ring in shore or [] for point in ring])
     grouped = any(row.get("lad_name") for row, _ in areas.values())
@@ -1064,7 +1096,7 @@ def _place_names(
         outlines.setdefault(name, []).extend(rings)
         boxes.setdefault(name, []).extend(
             (x, y)
-            for ring in rings
+            for ring in (rings if grouped else _main(rings))
             for x, y in ring
             if edge is None or (edge[0] <= x <= edge[2] and edge[1] <= y <= edge[3])
         )

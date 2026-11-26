@@ -234,6 +234,11 @@ than it, and the picture is framed on it. Use it when the outlines of the
 areas run out over water and the outline of the place that holds them does
 not.
 
+The outline of a place on a coast can hold a rock or a bank some way off the
+shore. A part of a place with less than a thousandth of the area of its
+largest part does not set the frame or move a name, so the place stays in the
+middle of the picture. Such a part is still drawn when the frame shows it.
+
 ```python
 boundaries = {
     "type": "FeatureCollection",
