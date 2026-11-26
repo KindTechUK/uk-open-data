@@ -578,7 +578,8 @@ def _table_lines(table: Table) -> list[str]:
     ]
     headings = [table.headings[column] for column in columns]
     widths = [
-        max(len(heading), *(len(row[index]) for row in cells))
+        # A list, so a table with no rows still has a width for each column.
+        max([len(heading), *(len(row[index]) for row in cells)])
         for index, heading in enumerate(headings)
     ]
     return [
