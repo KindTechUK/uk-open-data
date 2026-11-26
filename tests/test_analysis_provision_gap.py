@@ -334,6 +334,13 @@ def test_rows_that_cannot_be_placed_are_counted_not_named(nomis):
     assert "Narnia" not in json.dumps(result.to_dict())
 
 
+def test_a_row_with_no_place_is_left_out_whatever_its_volume(nomis):
+    rows = [*SPREAD, {"Area": "", "Sessions": ""}, {"Area": None, "Sessions": "?"}]
+    result = _run(rows)
+    assert result.figure("volume_located").value == 160
+    assert any(w.startswith("2 rows had no local authority") for w in result.warnings)
+
+
 def test_fractions_of_provision_all_in_the_area_leave_none_outside(nomis):
     # Added in another order, 0.1, 0.7 and 0.2 do not make 1.0 in floats.
     rows = _volumes(Lewisham=0.1, Greenwich=0.7, Adur=0.2)
