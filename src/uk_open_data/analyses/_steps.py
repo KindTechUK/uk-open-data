@@ -317,29 +317,6 @@ class Placed:
         return (self.not_found,), (self.blank, self.malformed)
 
 
-def count_by_postcode(
-    values: list[Any],
-    use_table: bool,
-    trail: Trail,
-    level: Level = NEIGHBOURHOOD,
-) -> tuple[Counter[str], int]:
-    """Place each row's postcode in an area and count rows per area.
-
-    Args:
-        values: The postcode column.
-        use_table: Look postcodes up on this machine when True, and with
-            postcodes.io when False.
-        trail: Where the steps, warnings, sources and choices are recorded.
-        level: The size of area to place postcodes in.
-
-    Returns:
-        Rows per area code, and the number of rows supplied.
-    """
-    placed = find_postcodes(values, use_table, trail, level)
-    note_placed(placed, trail)
-    return placed.counts, placed.supplied
-
-
 def place_postcodes(
     values: list[Any],
     use_table: bool,
@@ -692,13 +669,27 @@ def warn_left_out(
         )
 
 
-def count_by_neighbourhood(
-    codes: list[Any], counts: list[Any], trail: Trail
-) -> tuple[Counter[str], int]:
+@dataclass(frozen=True)
+class Counted:
+    """Counts given by neighbourhood, as they were read."""
+
+    counts: Counter[str]
+    rows: int
+    blank: int
+    # Every person counted has a neighbourhood, so none is left out before the
+    # neighbourhoods are joined to an index.
+    left_out: tuple[tuple[int, ...], ...] = ()
+
+    @property
+    def supplied(self) -> int:
+        """The people in the rows that have a code."""
+        return sum(self.counts.values())
+
+
+def read_neighbourhood_counts(codes: list[Any], counts: list[Any]) -> Counted:
     """Total the counts given for each neighbourhood code.
 
-    Returns:
-        People per neighbourhood code, and the number of people supplied.
+    Nothing is written yet: see :func:`note_neighbourhood_counts`.
     """
     totals: Counter[str] = Counter()
     blank = 0
@@ -713,21 +704,30 @@ def count_by_neighbourhood(
             totals[str(code).strip().upper()] += count
     if bad:
         raise AnalysisInputError(bad_counts(bad, NOT_A_COUNT), role="count")
-    if blank:
-        trail.warnings.append(f"{plural(blank, 'row')} had no neighbourhood code.")
-    supplied = sum(totals.values())
+    return Counted(totals, len(codes), blank)
+
+
+def note_neighbourhood_counts(counted: Counted, trail: Trail, privacy: LeftOut) -> None:
+    """Write how the counts by neighbourhood were read."""
+    if counted.blank:
+        trail.warnings.append(
+            f"{plural(counted.blank, 'row')} had no neighbourhood code."
+        )
+    people = ""
+    if privacy.total(counted.supplied) is not None:
+        people = f" and {counted.supplied} people"
     trail.working.append(
         Step(
             title="Read the neighbourhood counts",
             detail=(
-                f"{len(codes)} rows covering {len(totals)} neighbourhoods and "
-                f"{supplied} people. {blank} rows had no code and were left out."
+                f"{counted.rows} rows covering {len(counted.counts)} "
+                f"neighbourhoods{people}. {counted.blank} rows had no code and "
+                "were left out."
             ),
-            rows_in=len(codes),
-            rows_out=len(codes) - blank,
+            rows_in=counted.rows,
+            rows_out=counted.rows - counted.blank,
         )
     )
-    return totals, supplied
 
 
 # --- sums ------------------------------------------------------------------

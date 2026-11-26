@@ -15,7 +15,14 @@ from typing import Any
 import narwhals as nw
 
 import uk_open_data
-from uk_open_data.analyses._answers import AREA, HIDDEN, number, shown_first, values
+from uk_open_data.analyses._answers import (
+    AREA,
+    HIDDEN,
+    number,
+    sentence_case,
+    shown_first,
+    values,
+)
 from uk_open_data.analyses._inputs import is_blank
 from uk_open_data.analyses._labels import LABELS, said
 from uk_open_data.analyses._model import (
@@ -39,22 +46,29 @@ from uk_open_data.analyses._model import (
     Table,
 )
 from uk_open_data.analyses._privacy import (
+    LEFT_OUT_NOTE,
     SECOND_COUNT_NOTE,
+    LeftOut,
     band_labels,
     cells_to_hide,
     count_band,
     group_hidden,
+    hide_totals,
 )
 from uk_open_data.analyses._steps import (
     HOW_TO_NAME_A_PLACE,
     POSTCODE_LOOKUP,
     SUPPRESS_BELOW,
+    Counted,
+    Placed,
     Trail,
     before_rounding,
-    count_by_neighbourhood,
-    count_by_postcode,
+    find_postcodes,
+    note_neighbourhood_counts,
+    note_placed,
     percent,
     read_min_share,
+    read_neighbourhood_counts,
     read_threshold,
     use_postcode_table,
     which_entries,
@@ -209,29 +223,49 @@ def run(analysis_input: AnalysisInput) -> AnalysisResult:
     threshold = read_threshold(analysis_input.options)
     min_share = read_min_share(analysis_input.options)
     trail = Trail()
+    given: Placed | Counted
     if analysis_input.mode.name == "postcodes":
-        counts, supplied = count_by_postcode(
+        given = find_postcodes(
             analysis_input.values["postcode"],
             use_postcode_table(analysis_input.options),
             trail,
         )
     else:
-        counts, supplied = count_by_neighbourhood(
-            analysis_input.values["lsoa_code"], analysis_input.values["count"], trail
+        given = read_neighbourhood_counts(
+            analysis_input.values["lsoa_code"], analysis_input.values["count"]
         )
-    areas = _load_areas(trail)
-    located = _keep_english(counts, areas, threshold, trail)
+    areas, kept_note = _load_areas(trail)
+    located = _keep_english(given.counts, areas, threshold)
     catchment = _choose_catchment(
         located, areas, analysis_input.options.get("catchment"), min_share
     )
-    in_catchment = _keep_catchment(located, areas, catchment, threshold, trail)
+    in_catchment = _keep_catchment(located, areas, catchment, threshold)
+    # Nothing that counts people is written until the totals that would give
+    # away a few people left out are known.
+    n_located = sum(located.values())
+    privacy = hide_totals(
+        sum(in_catchment.values()),
+        (
+            (n_located - sum(in_catchment.values()),),
+            (sum(given.counts.values()) - n_located,),
+            *given.left_out,
+        ),
+        threshold,
+    )
+    if isinstance(given, Placed):
+        note_placed(given, trail, privacy)
+    else:
+        note_neighbourhood_counts(given, trail, privacy)
+    _note_kept_index(kept_note, trail)
+    _note_english(given.counts, located, privacy, trail)
+    _note_catchment(located, in_catchment, catchment, privacy, trail)
 
     people = _by_decile(in_catchment, areas)
     residents = _residents_by_decile(areas, catchment)
     hide = cells_to_hide(people, threshold, groups=(MOST_DEPRIVED, ELSEWHERE))
     tables = [
         _decile_table(people, residents, hide, trail),
-        _authority_table(located, areas, catchment, threshold, trail),
+        _authority_table(located, areas, catchment, privacy, trail),
     ]
     map_spec = None
     if catchment.whole_country:
@@ -243,18 +277,16 @@ def run(analysis_input: AnalysisInput) -> AnalysisResult:
     else:
         tables.append(_neighbourhood_table(in_catchment, areas, catchment, threshold))
         map_spec = _map_spec(threshold)
-    figures = _figures(
-        supplied, sum(located.values()), people, residents, hide, threshold
-    )
+    figures = _figures(given.supplied, n_located, people, residents, hide, privacy)
     trail.hidden += sum(figure.suppressed for figure in figures)
     trail.working.append(
         Step(
             title="Hid small counts",
             detail=(
                 f"Counts from 1 to {threshold - 1} for a named place or a "
-                "deprivation decile were hidden, along with anything that "
-                f"would let them be worked out. {trail.hidden} cells or "
-                "figures were hidden."
+                "deprivation decile, or of people left out, were hidden, along "
+                "with anything that would let them be worked out. "
+                f"{trail.hidden} cells or figures were hidden."
             ),
         )
     )
@@ -286,11 +318,16 @@ def run(analysis_input: AnalysisInput) -> AnalysisResult:
 # --- deprivation -----------------------------------------------------------
 
 
-def _load_areas(trail: Trail) -> dict[str, _Area]:
+def _load_areas(trail: Trail) -> tuple[dict[str, _Area], str | None]:
     """Load the deprivation index as one record per neighbourhood.
 
     The index is read from a copy kept on this machine when there is one (see
     :func:`uk_open_data.imd.keep_imd`), and the result then says so.
+
+    Returns:
+        One record per neighbourhood, and the note of the copy kept on this
+        machine, or None when the index was downloaded. The working says so
+        later, with :func:`_note_kept_index`, after the rows that were read.
     """
     kept = imd_path(2025) is not None
     try:
@@ -304,19 +341,7 @@ def _load_areas(trail: Trail) -> dict[str, _Area]:
             "Fetch it again with uk_open_data.imd.download_imd()."
         )
         raise AnalysisInputError(msg) from error
-    if note is None:
-        trail.sources.append(IOD_2025)
-    else:
-        trail.sources.append(kept_copy(IOD_2025, note))
-        trail.working.append(
-            Step(
-                title="Read the deprivation index kept on this machine",
-                detail=(
-                    "A copy of the index kept on this machine was used, so "
-                    f"nothing was downloaded. The copy was {note}"
-                ),
-            )
-        )
+    trail.sources.append(IOD_2025 if note is None else kept_copy(IOD_2025, note))
     frame = nw.from_native(loaded, eager_only=True)
     names = (
         "geography_code",
@@ -327,7 +352,7 @@ def _load_areas(trail: Trail) -> dict[str, _Area]:
         "population",
     )
     columns = [frame[name].to_list() for name in names]
-    return {
+    areas = {
         str(code): _Area(
             code=str(code),
             name=str(name),
@@ -340,40 +365,72 @@ def _load_areas(trail: Trail) -> dict[str, _Area]:
             *columns, strict=True
         )
     }
+    return areas, note
+
+
+def _note_kept_index(note: str | None, trail: Trail) -> None:
+    """Say in the working that the index was a copy kept on this machine."""
+    if note is None:
+        return
+    trail.working.append(
+        Step(
+            title="Read the deprivation index kept on this machine",
+            detail=(
+                "A copy of the index kept on this machine was used, so "
+                f"nothing was downloaded. The copy was {note}"
+            ),
+        )
+    )
 
 
 def _keep_english(
-    counts: Counter[str], areas: dict[str, _Area], threshold: int, trail: Trail
+    counts: Counter[str], areas: dict[str, _Area], threshold: int
 ) -> dict[str, int]:
-    """Keep the people placed in a neighbourhood the index covers."""
+    """Keep the people placed in a neighbourhood the index covers.
+
+    Nothing is written yet: see :func:`_note_english`.
+    """
     located = {code: n for code, n in counts.items() if code in areas and n > 0}
     n_located = sum(located.values())
-    total = sum(counts.values())
-    outside = total - n_located
-    trail.working.append(
-        Step(
-            title="Joined neighbourhoods to the deprivation index",
-            detail=(
-                f"{n_located} people live in a neighbourhood covered by the "
-                f"English Indices of Deprivation 2025. {outside} live outside "
-                "England or have a code the index does not list."
-            ),
-            rows_in=total,
-            rows_out=n_located,
-        )
-    )
-    if outside:
-        trail.warnings.append(
-            f"{outside} people were placed outside England, or in a "
-            "neighbourhood code the 2025 index does not list (for example a "
-            "2011 code). This analysis covers England only, so they are left out."
-        )
     if n_located < threshold:
+        outside = sum(counts.values()) - n_located
         elsewhere = sum(
             n for code, n in counts.items() if code[:1].upper() in OTHER_NATIONS
         )
         raise AnalysisInputError(_too_few_placed(outside, elsewhere, threshold))
     return located
+
+
+def _note_english(
+    counts: Counter[str], located: dict[str, int], privacy: LeftOut, trail: Trail
+) -> None:
+    """Write how many people were placed in a neighbourhood the index covers."""
+    n_located = sum(located.values())
+    total = sum(counts.values())
+    outside = sentence_case(privacy.count(total - n_located))
+    detail = (
+        f"{outside} people live outside England or have a code the index does not list."
+    )
+    if privacy.total(n_located) is not None:
+        detail = (
+            f"{n_located} people live in a neighbourhood covered by the "
+            f"English Indices of Deprivation 2025. {outside} live outside "
+            "England or have a code the index does not list."
+        )
+    trail.working.append(
+        Step(
+            title="Joined neighbourhoods to the deprivation index",
+            detail=detail,
+            rows_in=privacy.total(total),
+            rows_out=privacy.total(n_located),
+        )
+    )
+    if total - n_located:
+        trail.warnings.append(
+            f"{outside} people were placed outside England, or in a "
+            "neighbourhood code the 2025 index does not list (for example a "
+            "2011 code). This analysis covers England only, so they are left out."
+        )
 
 
 def _too_few_placed(outside: int, elsewhere: int, threshold: int) -> str:
@@ -493,38 +550,53 @@ def _keep_catchment(
     areas: dict[str, _Area],
     catchment: _Catchment,
     threshold: int,
-    trail: Trail,
 ) -> dict[str, int]:
-    """Keep the people who live in the catchment and record the step."""
+    """Keep the people who live in the catchment.
+
+    Nothing is written yet: see :func:`_note_catchment`.
+    """
     inside = {code: n for code, n in located.items() if _inside(areas[code], catchment)}
-    n_located = sum(located.values())
-    n_inside = sum(inside.values())
-    trail.working.append(
-        Step(
-            title="Set the area you serve",
-            detail=(
-                f"Area: {catchment.label}. {catchment.reason} "
-                f"{n_inside} of the {n_located} people located live in it. "
-                "The decile figures and the map cover these people."
-            ),
-            rows_in=n_located,
-            rows_out=n_inside,
-        )
-    )
-    if n_inside < threshold:
+    if sum(inside.values()) < threshold:
         msg = (
             f"Fewer than {threshold} of the people located live in the area "
             f"you serve ({catchment.label}), which is too few to give figures "
             f"that do not point at individuals. Check {said('catchment')}."
         )
         raise AnalysisInputError(msg, option="catchment")
+    return inside
+
+
+def _note_catchment(
+    located: dict[str, int],
+    inside: dict[str, int],
+    catchment: _Catchment,
+    privacy: LeftOut,
+    trail: Trail,
+) -> None:
+    """Write how many of the people located live in the catchment."""
+    n_located = sum(located.values())
+    n_inside = sum(inside.values())
+    shown = privacy.total(n_located)
+    of_the = "of the" if shown is None else f"of the {shown}"
+    trail.working.append(
+        Step(
+            title="Set the area you serve",
+            detail=(
+                f"Area: {catchment.label}. {catchment.reason} "
+                f"{n_inside} {of_the} people located live in it. "
+                "The decile figures and the map cover these people."
+            ),
+            rows_in=shown,
+            rows_out=n_inside,
+        )
+    )
     if n_inside < n_located:
         trail.warnings.append(
-            f"{n_located - n_inside} people live outside the area you serve. "
-            "They are counted in the local authority table but not in the "
-            f"decile figures. Change {said('catchment')} to include them."
+            f"{sentence_case(privacy.count(n_located - n_inside))} people live "
+            "outside the area you serve. They are counted in the local "
+            "authority table but not in the decile figures. Change "
+            f"{said('catchment')} to include them."
         )
-    return inside
 
 
 def _by_decile(counts: dict[str, int], areas: dict[str, _Area]) -> list[int]:
@@ -607,7 +679,7 @@ def _authority_table(
     located: dict[str, int],
     areas: dict[str, _Area],
     catchment: _Catchment,
-    threshold: int,
+    privacy: LeftOut,
     trail: Trail,
 ) -> Table:
     """People by local authority, with small authorities grouped together.
@@ -615,13 +687,16 @@ def _authority_table(
     Catchment authorities are always named, and hidden when small. Other
     authorities are named only when they reach the threshold; the rest are
     added into one unnamed row, which is shown as it is because it names no
-    place.
+    place. When the people located are hidden, that row is a few people left
+    out of the area, so it is hidden, and so is every share of the total.
     """
+    threshold = privacy.threshold
     per_authority: Counter[str] = Counter()
     for code, n in located.items():
         per_authority[areas[code].lad_code] += n
     lad_names = _authority_names(areas)
     total = sum(per_authority.values())
+    hide_rest = privacy.total(total) is None
     core = sorted(
         ((per_authority[lad], lad) for lad in catchment.lad_codes), reverse=True
     )
@@ -635,13 +710,16 @@ def _authority_table(
     named = [(n, lad) for n, lad in rest if n >= threshold]
     unnamed = [n for n, _ in rest if n < threshold]
 
+    def share(n: int, hidden: bool) -> float | None:
+        return None if hidden or hide_rest else percent(n, total)
+
     def row(n: int, lad: str, hidden: bool, inside: bool) -> dict[str, Any]:
         return {
             "lad_code": lad,
             "lad_name": lad_names[lad],
             "local_authorities": 1,
             "people": None if hidden else n,
-            "share_of_people": None if hidden else percent(n, total),
+            "share_of_people": share(n, hidden),
             "in_catchment": inside,
             "suppressed": hidden,
         }
@@ -652,15 +730,18 @@ def _authority_table(
     ]
     rows += [row(n, lad, False, catchment.whole_country) for n, lad in named]
     if unnamed:
+        trail.hidden += hide_rest
         rows.append(
             {
                 "lad_code": None,
                 "lad_name": "Other local authorities",
-                "local_authorities": len(unnamed),
-                "people": sum(unnamed),
-                "share_of_people": percent(sum(unnamed), total),
+                # Each holds someone, so how many there are could give the
+                # number of a few people away.
+                "local_authorities": None if hide_rest else len(unnamed),
+                "people": None if hide_rest else sum(unnamed),
+                "share_of_people": share(sum(unnamed), hide_rest),
                 "in_catchment": catchment.whole_country,
-                "suppressed": False,
+                "suppressed": hide_rest,
             }
         )
     return Table(
@@ -761,16 +842,14 @@ def _figures(
     people: list[int],
     residents: list[float],
     hide: list[bool],
-    threshold: int,
+    privacy: LeftOut,
 ) -> list[Figure]:
     """Build the headline figures."""
+    threshold = privacy.threshold
     figures = [
-        Figure("people_supplied", "People in the data you gave", supplied, "people"),
-        Figure(
-            "people_located",
-            "People placed in an English neighbourhood",
-            located,
-            "people",
+        privacy.figure("people_supplied", "People in the data you gave", supplied),
+        privacy.figure(
+            "people_located", "People placed in an English neighbourhood", located
         ),
         Figure(
             "people_in_catchment",
@@ -932,7 +1011,13 @@ def _answer(figures: list[Figure], whole_country: bool) -> str:
 
 
 def _left_out(shown: dict[str, Any]) -> str:
-    """Say how many people the answer leaves out, when it is a large share."""
+    """Say how many people the answer leaves out, when it is a large share.
+
+    When the people located are hidden, so that a few people left out cannot
+    be worked out, it says nothing.
+    """
+    if shown["people_located"] is None:
+        return ""
     outside = shown["people_located"] - shown["people_in_catchment"]
     if outside < LARGE_SHARE_OUTSIDE * shown["people_located"]:
         return ""
@@ -1028,11 +1113,14 @@ def _privacy(threshold: int, trail: Trail) -> Privacy:
             "A count is hidden when it is small and is about a named place or "
             "a deprivation decile.",
             SECOND_COUNT_NOTE,
+            LEFT_OUT_NOTE,
             "The map shows people in bands, and the lowest band includes zero, "
             "so a neighbourhood with a few people looks the same as one with "
             "none.",
             "The number of people in local authorities that are not named is "
-            "shown even when it is small, because it points at no place.",
+            "shown even when it is small, because it points at no place. When "
+            "they are everyone who lives outside the area you serve, it is "
+            "hidden like any few people left out.",
         ),
     )
 

@@ -458,6 +458,15 @@ are about the people who live there, so they can be set against everyone who
 lives there. People outside the area you serve are counted in the local authority
 table, and a warning says how many there are.
 
+The people left out are counted like any group. When fewer than 5 live
+outside the area you serve, or fewer than 5 could not be placed, the warnings
+and the working say "fewer than 5". `people_located` and `people_supplied`
+are then hidden when taking one total from another would give that number
+away. When `people_located` is hidden, so are the unnamed row of the local
+authority table and the shares in that table, because they would give it
+away too. `people_in_catchment` is always shown, because the decile figures
+are about those people.
+
 | Figure | Meaning |
 | --- | --- |
 | `people_supplied` | People in the data you gave |

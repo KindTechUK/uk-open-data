@@ -355,19 +355,60 @@ def test_figures_from_postcodes(world):
     assert result.figure("reach_per_1000_elsewhere").value == 1.38
 
 
+def test_a_few_people_left_out_cannot_be_worked_out_from_the_totals(world):
+    # 2 of 62 people live in Greenwich, under 5%, so outside the area worked
+    # out. Nothing in the result may give the 2 away.
+    rows = [
+        {"lsoa_code": _area_code(0, 1), "count": 30},
+        {"lsoa_code": _area_code(0, 6), "count": 30},
+        {"lsoa_code": _area_code(1, 1), "count": 2},
+    ]
+    result = world.run(rows=rows, columns={})
+    assert result.figure("people_in_catchment").value == 60
+    for figure_id in ("people_located", "people_supplied"):
+        figure = result.figure(figure_id)
+        assert (figure.value, figure.suppressed) == (None, True)
+        assert figure.note == (
+            "Hidden so a small number of people left out cannot be worked out."
+        )
+    table = result.table("by_local_authority").rows
+    assert [(row["lad_name"], row["people"], row["suppressed"]) for row in table] == [
+        ("Lewisham", 60, False),
+        ("Other local authorities", None, True),
+    ]
+    # A share of 62 would give the 62 away.
+    assert [row["share_of_people"] for row in table] == [None, None]
+    said = [
+        *result.warnings,
+        *(f"{step.title}. {step.detail}" for step in result.working),
+        result.answer,
+    ]
+    assert [text for text in said if "62" in text or "2 people" in text] == []
+    assert 62 not in {
+        n for step in result.working for n in (step.rows_in, step.rows_out)
+    }
+    assert any(
+        w.startswith("Fewer than 5 people live outside the area you serve")
+        for w in result.warnings
+    )
+
+
 def test_catchment_is_where_most_people_live(world):
     world.add(2, 1, 3)  # three people in Hartlepool: under 5% of 73
     result = world.run()
     catchment = next(choice for choice in result.choices if choice.id == "catchment")
     assert catchment.value == ["Lewisham", "Greenwich"]
     assert catchment.option == "catchment"
-    assert result.figure("people_located").value == 73
+    assert result.figure("people_located").value is None  # 73 gives the 3 away
     assert result.figure("people_in_catchment").value == 70
-    assert any("3 people live outside the area you serve" in w for w in result.warnings)
+    assert any(
+        "Fewer than 5 people live outside the area you serve" in w
+        for w in result.warnings
+    )
     other = result.table("by_local_authority").rows[-1]
     assert other["lad_name"] == "Other local authorities"
     assert other["lad_code"] is None
-    assert other["people"] == 3
+    assert other["people"] is None
 
 
 def test_decile_table_hides_small_counts_and_a_partner(world):
@@ -478,7 +519,7 @@ def test_rows_that_cannot_be_used_are_counted_not_quoted(world):
         {"Client postcode": "ZZ99 9VC"},
     ]
     result = world.run()
-    assert result.figure("people_supplied").value == 73
+    assert result.figure("people_supplied").value is None  # 73 gives the 3 away
     assert result.figure("people_located").value == 70
     assert len(result.warnings) == 3
     text = json.dumps(result.to_dict())
