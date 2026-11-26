@@ -334,6 +334,17 @@ def test_rows_that_cannot_be_placed_are_counted_not_named(nomis):
     assert "Narnia" not in json.dumps(result.to_dict())
 
 
+def test_an_area_where_the_need_counts_nobody_is_an_input_error(nomis):
+    keep_need_figures(
+        "residents",
+        [("E09000023", "Lewisham", 0), ("E09000011", "Greenwich", 0)],
+        "invented for a test.",
+    )
+    with pytest.raises(AnalysisInputError, match="count nobody") as raised:
+        _run(_volumes(Lewisham=10), options={"need": "residents"})
+    assert raised.value.option == "need"
+
+
 @pytest.mark.parametrize("volume", ["lots", "", None, -3, "nan", "inf", True])
 def test_a_volume_that_is_not_a_number_is_an_input_error(nomis, volume):
     rows = [*SPREAD, {"Area": "Cardiff", "Sessions": volume}]

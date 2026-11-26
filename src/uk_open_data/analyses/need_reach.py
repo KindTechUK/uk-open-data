@@ -73,6 +73,7 @@ from uk_open_data.analyses._need import (
     not_listed_rows,
     read_measure,
     read_top,
+    require_some_need,
 )
 from uk_open_data.analyses._need import clear_need_cache as clear_need_cache
 from uk_open_data.analyses._need import download_need_figures as download_need_figures
@@ -535,6 +536,7 @@ def _rows(
         )
         raise AnalysisInputError(msg, option="catchment")
     _warn_about_area(n_located - n_inside, with_people, compared, trail)
+    require_some_need(need, compared.label)
     cut = high_need_cut(need)
     high = [amount >= cut and amount > 0 for amount in need]
     # When one small count needs a second count hidden with it, the smallest

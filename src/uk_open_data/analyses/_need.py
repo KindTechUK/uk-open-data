@@ -536,6 +536,24 @@ def guess_compared(
     )
 
 
+def require_some_need(need: Sequence[float], label: str) -> None:
+    """Stop when the need figures count nobody in the area compared.
+
+    Every rate and share is set against the total, so with none there is no
+    answer to give.
+
+    Raises:
+        AnalysisInputError: If the need in the area adds up to zero.
+    """
+    if sum(need) > 0:
+        return
+    msg = (
+        f"The need figures count nobody in the area you serve ({label}). "
+        f"Check {said('need')} and {said('catchment')}."
+    )
+    raise AnalysisInputError(msg, option="need")
+
+
 def high_need_cut(need: list[float]) -> float:
     """Return the count at or above which a local authority is high need.
 

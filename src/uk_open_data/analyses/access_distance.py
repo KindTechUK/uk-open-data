@@ -74,6 +74,7 @@ from uk_open_data.analyses._need import (
     load_need,
     read_measure,
     read_top,
+    require_some_need,
 )
 from uk_open_data.analyses._steps import (
     EVERYWHERE,
@@ -444,7 +445,9 @@ def _rows(
             f"and a centre. Check {said('catchment')}."
         )
         raise AnalysisInputError(msg, option="catchment")
-    need_bands = band_by_need([authorities[code].need for code in codes])
+    need = [authorities[code].need for code in codes]
+    require_some_need(need, compared.label)
+    need_bands = band_by_need(need)
     distances = [
         round(min(distance_km(centres[code], site) for site in sites)) for code in codes
     ]

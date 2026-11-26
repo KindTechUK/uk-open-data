@@ -1033,3 +1033,15 @@ def test_command_line_report_when_nowhere_is_beyond_reach(kept, tmp_path, capsys
     )
     assert code == EXIT_OK
     assert "No local authority in the area you serve" in capsys.readouterr().out
+
+
+def test_an_area_where_the_need_counts_nobody_is_an_input_error():
+    keep_need_figures(
+        "residents",
+        [("E09000023", "Lewisham", 0), ("E09000011", "Greenwich", 0)],
+        "invented for a test.",
+    )
+    keep_centres(CENTRES, "invented for a test.")
+    with pytest.raises(AnalysisInputError, match="count nobody") as raised:
+        _run(options={"need": "residents"})
+    assert raised.value.option == "need"
