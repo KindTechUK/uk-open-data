@@ -533,6 +533,33 @@ def test_labels_are_matched_by_their_wording(nomis, label, group):
     assert gained == {key: 1000 if key == group else 0 for key in GROUPS}
 
 
+def test_a_few_people_left_out_cannot_be_worked_out_from_the_totals(nomis):
+    # 3 of 203 people have a label that matches no group. Taking one total
+    # from another must not give the 3 away.
+    result = _run([*CLIENTS, {"Ethnicity": "Not stated", "Clients": 3}])
+    assert result.figure("people_matched").value == 200
+    for figure_id in ("people_not_matched", "people_in_catchment", "people_supplied"):
+        figure = result.figure(figure_id)
+        assert (figure.value, figure.suppressed) == (None, True)
+    assert result.key_figures == (
+        "groups_under_represented",
+        "people_matched",
+        "residents",
+    )
+    said = [
+        *result.warnings,
+        *(f"{step.title}. {step.detail}" for step in result.working),
+        result.answer,
+    ]
+    assert [text for text in said if "203" in text or "3 were not" in text] == []
+    assert 203 not in {
+        n for step in result.working for n in (step.rows_in, step.rows_out)
+    }
+    assert any(
+        w.startswith("Fewer than 5 people have no label") for w in result.warnings
+    )
+
+
 @pytest.mark.parametrize(
     "label", ["Not stated", "Prefer not to say", "Unknown", "Refused", "Code 7", "-"]
 )
@@ -949,7 +976,7 @@ def test_catchment_is_worked_out_from_where_people_live(nomis):
     choice = next(c for c in result.choices if c.id == "catchment")
     assert choice.value == "Greenwich, Lewisham"
     assert "at least 5%" in choice.reason
-    assert result.figure("people_supplied").value == 209
+    assert result.figure("people_supplied").value is None  # 209 gives the 3 away
     assert result.figure("people_in_catchment").value == 196
     assert result.figure("people_matched").value == 190
     assert result.figure("people_not_matched").value == 6
