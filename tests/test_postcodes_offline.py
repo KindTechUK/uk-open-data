@@ -113,8 +113,11 @@ def test_build_rejects_a_source_with_nothing_to_keep(tmp_path):
 
 def test_nothing_is_installed_to_begin_with():
     assert postcode_table_path() is None
-    # No table is published yet, so the message says how to make one.
-    with pytest.raises(PostcodeTableError, match="postcodes build"):
+    # With no table published, the message says how to make one.
+    with (
+        mock.patch("uk_open_data.postcodes.offline.PUBLISHED_TABLE", None),
+        pytest.raises(PostcodeTableError, match="postcodes build"),
+    ):
         postcode_to_lsoa("SE13 7VC")
 
 
@@ -221,7 +224,10 @@ def test_download_checks_the_sha256_before_installing(packed):
 
 
 def test_download_needs_https_a_sha256_and_a_published_table():
-    with pytest.raises(PostcodeTableError, match="No postcode table has been"):
+    with (
+        mock.patch("uk_open_data.postcodes.offline.PUBLISHED_TABLE", None),
+        pytest.raises(PostcodeTableError, match="No postcode table has been"),
+    ):
         download_postcode_table()
     with pytest.raises(PostcodeTableError, match="https"):
         download_postcode_table(url="http://example.org/t.gz", sha256="0" * 64)
@@ -346,7 +352,8 @@ def test_command_line_builds_installs_and_describes_a_table(tmp_path, capsys):
     digest = out.strip().splitlines()[-1].removeprefix("sha256: ")
 
     # Having no table is not a mistake, so the command says so and ends well.
-    assert main(["postcodes", "info"]) == EXIT_OK
+    with mock.patch("uk_open_data.postcodes.offline.PUBLISHED_TABLE", None):
+        assert main(["postcodes", "info"]) == EXIT_OK
     said = capsys.readouterr()
     assert said.err == ""
     # What a person running an analysis needs comes first, and how to make a
@@ -356,7 +363,7 @@ def test_command_line_builds_installs_and_describes_a_table(tmp_path, capsys):
         "analysis then looks postcodes up with postcodes.io"
     )
     assert said.out.index("postcodes.io") < said.out.index("postcodes build")
-    # No table is published yet, so the command must not send people to fetch one.
+    # With no table published, the command must not send people to fetch one.
     assert "postcodes download" not in said.out
     assert "uk-open-data postcodes build" in said.out
     assert "looks postcodes up with postcodes.io" in said.out

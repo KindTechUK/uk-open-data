@@ -44,9 +44,16 @@ OLD_DATA_FOLDER = "kindtech"
 TABLE_FILE_NAME = "postcodes.ktpc"
 
 # The table published for this version of the package, as a dict with "url",
-# "sha256" (of the downloaded .gz file) and "edition". None until one is
-# published; download_postcode_table() then needs a url and sha256 passing in.
-PUBLISHED_TABLE: dict[str, str] | None = None
+# "sha256" (of the downloaded .gz file) and "edition". With None,
+# download_postcode_table() needs a url and sha256 passing in.
+PUBLISHED_TABLE: dict[str, str] | None = {
+    "url": (
+        "https://github.com/KindTechUK/uk-open-data/releases/download/"
+        "postcodes-may-2026/postcodes-may-2026.gz"
+    ),
+    "sha256": "d835877940dd657ec34d5db79afcbe0fc725274da8c7adfb3a424ce662ec52d7",
+    "edition": "May 2026",
+}
 
 # The statements the ONS licence asks every user of its postcode data to show.
 ATTRIBUTION = (
