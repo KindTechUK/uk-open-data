@@ -252,6 +252,8 @@ def _handle_describe(args: argparse.Namespace) -> str:
 def _handle_run(args: argparse.Namespace) -> str:
     """Run an analysis on a file."""
     info = describe_analysis(args.analysis_id)
+    if args.map is not None and not info.has_map:
+        raise ValueError("This analysis has no map yet. Run it without --map.")
     rows = _read_rows(args.file, args.sheet)
     columns = dict(_split_pair(pair, "--column") for pair in args.column)
     options = {

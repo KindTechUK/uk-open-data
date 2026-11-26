@@ -66,7 +66,8 @@ To run an analysis on a file without writing Python, use the
 
 Returns an `AnalysisInfo` for every analysis: its `id`, `title`, the `question` it
 answers, a `summary`, its `roles` (the columns it can use), its `input_modes`
-(the shapes of data it accepts), its `options` and its `coverage`.
+(the shapes of data it accepts), its `options`, its `coverage`, and `has_map`,
+which is `False` for an analysis that has no map yet.
 
 Every option has two names. `name` is its code name, the one a call is
 written with, such as `catchment`. `label` is its short plain name, such as

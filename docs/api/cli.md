@@ -79,7 +79,9 @@ to answer, so the command first writes "Fetching the outlines for the map
 cannot be fetched, the report is still printed or written, no map file is made,
 and the command says so in one sentence and exits with status 3. Status 3 means
 the report is whole and only the map is missing, so a script can keep the
-report. Status 2 means nothing was made.
+report. Status 2 means nothing was made. An analysis with no map yet, such as
+who-we-miss, refuses `--map` with status 2 before it reads the file or fetches
+anything.
 
 A run that prints its answer writes one line to the `uk_open_data.runs` logger,
 with the analysis, the input mode and the word `cli`. Nothing collects it on

@@ -287,6 +287,7 @@ INFO = AnalysisInfo(
         ),
     ),
     coverage=EVERYWHERE,
+    has_map=False,
 )
 
 CAVEATS = (
