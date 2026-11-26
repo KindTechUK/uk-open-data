@@ -686,6 +686,8 @@ def _neighbourhood_table(
     threshold: int,
 ) -> Table:
     """One row per catchment neighbourhood, with people in bands, for the map."""
+    # Only the catchment is sorted, not all 33,000 neighbourhoods of England.
+    inside = [area for area in areas.values() if _inside(area, catchment)]
     rows = [
         {
             "geography_code": area.code,
@@ -695,8 +697,7 @@ def _neighbourhood_table(
             "residents": round(area.residents),
             "people_band": count_band(in_catchment.get(area.code, 0), threshold),
         }
-        for area in sorted(areas.values(), key=lambda item: item.code)
-        if _inside(area, catchment)
+        for area in sorted(inside, key=lambda item: item.code)
     ]
     return Table(
         id="by_neighbourhood",
