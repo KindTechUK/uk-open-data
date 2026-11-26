@@ -57,6 +57,7 @@ from uk_open_data.analyses._steps import (
     read_min_share,
     read_threshold,
     use_postcode_table,
+    which_entries,
 )
 from uk_open_data.analyses.sources import IOD_2025
 from uk_open_data.imd import imd_path, kept_imd_note, load_imd
@@ -456,11 +457,15 @@ def _named_catchment(wanted: Any, areas: dict[str, _Area]) -> _Catchment:
     lad_names = _authority_names(areas)
     by_key = {code.lower(): code for code in lad_names}
     by_key.update({name.lower(): code for code, name in lad_names.items()})
-    unknown = [item for item in cleaned if item.lower() not in by_key]
+    unknown = [
+        position
+        for position, item in enumerate(cleaned, start=1)
+        if item.lower() not in by_key
+    ]
     if unknown:
         msg = (
             f"These entries in {said('catchment')} are not English local "
-            f"authorities in the 2025 index: {', '.join(unknown)}. "
+            f"authorities in the 2025 index: {which_entries(unknown, len(cleaned))}. "
             f"{HOW_TO_NAME_A_PLACE}"
         )
         raise AnalysisInputError(msg, option="catchment")

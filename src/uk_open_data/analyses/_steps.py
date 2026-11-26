@@ -141,6 +141,26 @@ def where_rows(positions: list[int]) -> str:
     return f"{listed}, counting from the first row of data"
 
 
+def which_entries(positions: list[int], given: int) -> str:
+    """Say which entries of a list a person gave are meant, by their place in it.
+
+    A place in the list says nothing of what the entry holds, so a message
+    can point at it without repeating what the person wrote. The first entry
+    is number 1.
+    """
+    if given == 1:
+        return "the only one given"
+    shown = [str(position) for position in positions[:ROWS_NAMED]]
+    more = len(positions) - len(shown)
+    if more:
+        listed = f"numbers {', '.join(shown)} and {more} more"
+    elif len(shown) == 1:
+        listed = f"number {shown[0]}"
+    else:
+        listed = f"numbers {', '.join(shown[:-1])} and {shown[-1]}"
+    return f"{listed} of the {given} given"
+
+
 def bad_counts(positions: list[int], what: str) -> str:
     """Say which rows hold a count or volume that cannot be added up."""
     return (
@@ -234,11 +254,16 @@ def named_areas(
         return tuple(codes), whole.capitalize()
     by_key = {code.casefold(): code for code in names}
     by_key.update({name.casefold(): code for code, name in names.items()})
-    unknown = [item for item in cleaned if item.casefold() not in by_key]
+    unknown = [
+        position
+        for position, item in enumerate(cleaned, start=1)
+        if item.casefold() not in by_key
+    ]
     if unknown:
         msg = (
             f"These entries in {said('catchment')} are not local authorities "
-            f"in the {listed_in}: {', '.join(unknown)}. {HOW_TO_NAME_A_PLACE}"
+            f"in the {listed_in}: {which_entries(unknown, len(cleaned))}. "
+            f"{HOW_TO_NAME_A_PLACE}"
         )
         raise AnalysisInputError(msg, option="catchment")
     chosen = sorted({by_key[item.casefold()] for item in cleaned})

@@ -301,8 +301,10 @@ def test_registering_the_same_analysis_twice_fails():
 
 
 def test_unknown_option_is_rejected(world):
-    with pytest.raises(AnalysisInputError, match="no option called colour") as caught:
+    with pytest.raises(AnalysisInputError, match="no option of that name") as caught:
         world.run(options={"colour": "red"})
+    # The name that was sent is not said back.
+    assert "colour" not in str(caught.value)
     # Each option is listed by the name that is typed and the name a page shows.
     assert "suppress_below ('Smallest count shown')" in str(caught.value)
     assert "catchment ('Area you serve')" in str(caught.value)
@@ -530,8 +532,10 @@ def test_named_catchment_by_name_or_code(world):
 
 
 def test_unknown_catchment_is_rejected(world):
-    with pytest.raises(AnalysisInputError, match="Narnia"):
+    with pytest.raises(AnalysisInputError, match="number 2 of the 2 given") as caught:
         world.run(options={"catchment": ["Lewisham", "Narnia"]})
+    # The entry is pointed at by its place in the list, not said back.
+    assert "Narnia" not in str(caught.value)
 
 
 def test_whole_of_england_has_no_map(world):

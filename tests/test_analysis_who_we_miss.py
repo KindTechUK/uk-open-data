@@ -492,8 +492,12 @@ def test_a_table_without_counts_is_an_input_error():
 
 
 def test_scotland_is_not_in_the_census_figures(nomis):
-    with pytest.raises(AnalysisInputError, match="City of Edinburgh"):
+    with pytest.raises(
+        AnalysisInputError, match="not local authorities in the census figures"
+    ) as caught:
         _run(CLIENTS, options={"catchment": "City of Edinburgh"})
+    assert caught.value.option == "catchment"
+    assert "Edinburgh" not in str(caught.value)
 
 
 # --- matching labels to groups ---------------------------------------------

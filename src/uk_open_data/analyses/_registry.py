@@ -234,7 +234,11 @@ def _get(analysis_id: str) -> Analysis:
 def _resolve_options(
     info: AnalysisInfo, options: Mapping[str, Any] | None
 ) -> dict[str, Any]:
-    """Fill in defaults and reject options the analysis does not have."""
+    """Fill in defaults and reject options the analysis does not have.
+
+    The names of the options it does not have are not repeated: they came
+    from the person, and a message may be shown to an assistant.
+    """
     given = dict(options or {})
     known = {option.name: option.default for option in info.options}
     unknown = [name for name in given if name not in known]
@@ -244,10 +248,12 @@ def _resolve_options(
             f"{option.name} ('{option.label}')" if option.label else option.name
             for option in info.options
         )
-        msg = (
-            f"This analysis has no option called {', '.join(sorted(unknown))}. "
-            f"Its options are: {listed or 'none'}."
+        which = (
+            "option of that name"
+            if len(unknown) == 1
+            else f"options of those {len(unknown)} names"
         )
+        msg = f"This analysis has no {which}. Its options are: {listed or 'none'}."
         raise AnalysisInputError(msg)
     return {**known, **given}
 
