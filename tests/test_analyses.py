@@ -618,6 +618,13 @@ def test_too_few_people_in_a_named_catchment_is_an_error(world):
         world.run(options={"catchment": "Hartlepool"})
 
 
+def test_an_empty_list_of_places_is_a_bad_catchment(world):
+    with pytest.raises(AnalysisInputError) as raised:
+        world.run(options={"catchment": []})
+    assert raised.value.option == "catchment"
+    assert "must be a local authority name or code" in str(raised.value)
+
+
 def test_no_postcodes_at_all_points_at_the_column(world):
     with pytest.raises(AnalysisInputError, match="right column"):
         world.run(rows=[{"Client postcode": "Anna"}, {"Client postcode": "Ben"}])

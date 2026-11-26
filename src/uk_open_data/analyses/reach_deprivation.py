@@ -438,8 +438,10 @@ def _choose_catchment(
 def _named_catchment(wanted: Any, areas: dict[str, _Area]) -> _Catchment:
     """Turn the catchment option into a set of local authorities."""
     items = [wanted] if isinstance(wanted, str) else wanted
-    if not isinstance(items, list | tuple) or not all(
-        isinstance(item, str) and item.strip() for item in items
+    if (
+        not isinstance(items, list | tuple)
+        or not items
+        or not all(isinstance(item, str) and item.strip() for item in items)
     ):
         msg = (
             f"{said('catchment')} must be a local authority name or code, a "
