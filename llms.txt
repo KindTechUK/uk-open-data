@@ -1,6 +1,6 @@
 # uk-open-data
 
-> UK open data in Python for charities, researchers and students: ONS geographic boundaries, Nomis statistics, postcode lookups and deprivation indices for all four nations, joined on a shared `geography_code` column. It also has analyses that answer a charity's questions from totals, a command line, and a connector for chat assistants over the Model Context Protocol.
+> UK open data in Python for civil society, from charities and community groups to researchers and students. It loads public data from official sources and joins it to your own. It covers geographic boundaries, Nomis statistics, postcode lookups and deprivation indices for all four nations so far, with more datasets on the way. It also has analyses that answer a charity's questions from totals, a command line, and a connector for chat assistants over the Model Context Protocol.
 
 - Install with `uv add uk-open-data` and import `uk_open_data`. `kindtech` is the old name.
 - Statistics, postcode lookups, deprivation data and boundary properties (`geodata_to_properties`) share a `geography_code` column: join on it.

@@ -1,9 +1,10 @@
 # uk-open-data
 
-UK open data in Python for charities, researchers and students: geographic
-boundaries, official statistics from the ONS and Nomis, postcode lookups and
-deprivation indices for all four nations, with analyses that join them to your
-own data and return figures you can check.
+UK open data in Python for civil society, from charities and community groups
+to researchers and students. Load public data from official sources, join it
+to your own, and get figures you can check. The first datasets are geographic
+boundaries, official statistics, postcodes and deprivation indices, with more
+on the way.
 
 ## Try it now — no install
 

@@ -1,7 +1,7 @@
 {
   "$schema": "https://context7.com/schema/context7.json",
   "projectTitle": "uk-open-data",
-  "description": "Python package for UK open data: ONS boundaries, Nomis statistics, postcode lookups and deprivation indices for all four nations, joined on geography_code. Also analyses for charities, a command line and an MCP connector.",
+  "description": "UK open data in Python for civil society, from charities and community groups to researchers and students. Loads public data from official sources and joins it to your own. Covers boundaries, Nomis statistics, postcodes and deprivation indices so far, with more datasets on the way. Also analyses for charities, a command line and an MCP connector.",
   "folders": ["docs"],
   "excludeFolders": ["docs/blog"],
   "rules": [

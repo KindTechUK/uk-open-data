@@ -1,8 +1,7 @@
 site_name: uk-open-data
 site_description: >-
-  UK open data in Python for charities, researchers and students: ONS
-  boundaries, Nomis statistics, postcodes and deprivation indices, joined to
-  your own data.
+  UK open data in Python for civil society, from charities and community groups
+  to researchers and students. Load public data and join it to your own.
 site_url: https://kindtechuk.github.io/uk-open-data/
 
 # Repository information

@@ -1,9 +1,10 @@
 # uk-open-data
 
-UK open data in Python for charities, researchers and students: geographic
-boundaries, official statistics from the ONS and Nomis, postcode lookups and
-deprivation indices for all four nations, with analyses that join them to your
-own data and return figures you can check.
+UK open data in Python for civil society, from charities and community groups
+to researchers and students. Load public data from official sources, join it
+to your own, and get figures you can check. The first datasets are geographic
+boundaries, official statistics, postcodes and deprivation indices, with more
+on the way.
 
 Made by [KindTech UK](https://github.com/KindTechUK). Up to version 0.1 the
 package was called `kindtech`.
@@ -112,12 +113,10 @@ the docs for the full write-ups and figures.
 
 ## For students and researchers
 
-The same loaders work for coursework, a dissertation or a research project that
-needs UK area data. Each one fetches from the official source (the ONS
-Geoportal, Nomis, postcodes.io and each nation's index of deprivation) and
-returns a table with a `geography_code` column, so the sources join directly.
+The same loaders work for coursework, a dissertation or a research project.
+Each one fetches from an official source, and
 [Data sources](https://kindtechuk.github.io/uk-open-data/api/data-sources/)
-explains the APIs behind them, and the notebooks above run in the browser with
+explains the APIs behind them. The notebooks above run in the browser with
 nothing to install.
 
 Students and researchers are welcome to contribute: a new data source, a worked

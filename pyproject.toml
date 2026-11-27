@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "uk-open-data"
 version = "0.2.0a1"
-description = "UK open data in Python: boundaries, statistics, postcodes and deprivation indices, joined to your own data"
+description = "UK open data in Python for civil society, from charities and community groups to researchers and students"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
@@ -21,6 +21,7 @@ keywords = [
     "deprivation",
     "geospatial",
     "charity",
+    "civil-society",
     "research",
 ]
 classifiers = [
