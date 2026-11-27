@@ -1,4 +1,12 @@
-# KindTech
+# uk-open-data
+
+> UK open data in Python for civil society, from charities and community groups to researchers and students. Load public data and join it to your own.
+
+- Install with `uv add uk-open-data` and import `uk_open_data`. `kindtech` is the old name.
+- Statistics, postcode lookups, deprivation data and boundary properties (`geodata_to_properties`) share a `geography_code` column: join on it.
+- Loaders return the DataFrame library you have installed (polars if you have both), so install pandas or polars yourself. `load_geodata` returns GeoJSON.
+- The connector for chat assistants needs an extra: `uv add "uk-open-data[connector]"`, then `uk-open-data connector`.
+
 
 ## Home
 

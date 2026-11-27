@@ -6,6 +6,8 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
+        <meta name="description" content="UK open data in Python for civil society, from charities and community groups to researchers and students. Load public data and join it to your own.">
+      
       
       
         <link rel="canonical" href="https://kindtechuk.github.io/uk-open-data/">
@@ -20,7 +22,7 @@
     
     
       
-        <title>KindTech</title>
+        <title>uk-open-data</title>
       
     
     
@@ -74,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#kindtech" class="md-skip">
+        <a href="#uk-open-data" class="md-skip">
           Skip to content
         </a>
       
@@ -90,7 +92,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="KindTech" class="md-header__button md-logo" aria-label="KindTech" data-md-component="logo">
+    <a href="." title="uk-open-data" class="md-header__button md-logo" aria-label="uk-open-data" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -104,7 +106,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            KindTech
+            uk-open-data
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -339,13 +341,13 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="KindTech" class="md-nav__button md-logo" aria-label="KindTech" data-md-component="logo">
+    <a href="." title="uk-open-data" class="md-nav__button md-logo" aria-label="uk-open-data" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    KindTech
+    uk-open-data
   </label>
   
     <div class="md-nav__source">
@@ -1188,8 +1190,12 @@
   
 
 
-<h1 id="kindtech">KindTech</h1>
-<p>Ergonomic Python access to UK public data. Geographic boundaries from the ONS ArcGIS Geoportal, statistics from the NOMIS API — with universal DataFrame support.</p>
+<h1 id="uk-open-data">uk-open-data</h1>
+<p>UK open data in Python for civil society, from charities and community groups
+to researchers and students. Load public data from official sources, join it
+to your own, and get figures you can check. The first datasets are geographic
+boundaries, official statistics, postcodes and deprivation indices, with more
+on the way.</p>
 <h2 id="try-it-now-no-install">Try it now — no install</h2>
 <p>Run a real notebook in your browser. Each one fetches live ONS data through the molab cloud runtime:</p>
 <div class="grid cards">
@@ -1218,25 +1224,46 @@
 <p>Install <a href="https://pypi.org/project/uk-open-data/">uk-open-data from PyPI</a>:</p>
 <div class="highlight"><pre><span></span><code>uv<span class="w"> </span>add<span class="w"> </span>uk-open-data
 </code></pre></div>
-<p>KindTech depends on requests, narwhals, and python-calamine. You bring your own
+<p>uk-open-data depends on requests, narwhals, and python-calamine. You bring your own
 DataFrame library (pandas or polars). The <a href="faq/">package FAQ</a> explains
 which subpackages are included and how they are released.</p>
 <h2 id="quick-start">Quick start</h2>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">uk_open_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_geodata</span><span class="p">,</span> <span class="n">load_ons</span><span class="p">,</span> <span class="n">geodata_to_properties</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>  <span class="c1"># or polars</span>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>  <span class="c1"># or polars</span>
 
-<span class="c1"># Load LAD boundaries (GeoJSON) and extract properties</span>
-<span class="n">geojson</span> <span class="o">=</span> <span class="n">load_geodata</span><span class="p">(</span><span class="n">geography_type</span><span class="o">=</span><span class="s2">&quot;LAD&quot;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="s2">&quot;2024&quot;</span><span class="p">)</span>
-<span class="n">geo_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">geodata_to_properties</span><span class="p">(</span><span class="n">geojson</span><span class="p">,</span> <span class="s2">&quot;LAD&quot;</span><span class="p">,</span> <span class="mi">2024</span><span class="p">))</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">uk_open_data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">geodata_to_properties</span><span class="p">,</span>
+    <span class="n">load_geodata</span><span class="p">,</span>
+    <span class="n">load_ons</span><span class="p">,</span>
+    <span class="n">postcodes_to_geography</span><span class="p">,</span>
+<span class="p">)</span>
 
-<span class="c1"># Load ONS statistics — columns are normalised automatically</span>
-<span class="n">ons_df</span> <span class="o">=</span> <span class="n">load_ons</span><span class="p">(</span><span class="s2">&quot;population&quot;</span><span class="p">,</span> <span class="n">geography_type</span><span class="o">=</span><span class="s2">&quot;LAD&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="s2">&quot;latest&quot;</span><span class="p">)</span>
+<span class="c1"># Local authority boundaries from the ONS Geoportal</span>
+<span class="n">geojson</span> <span class="o">=</span> <span class="n">load_geodata</span><span class="p">(</span><span class="n">geography_type</span><span class="o">=</span><span class="s2">&quot;LAD&quot;</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="s2">&quot;2025&quot;</span><span class="p">,</span> <span class="n">boundary_type</span><span class="o">=</span><span class="s2">&quot;BUC&quot;</span><span class="p">)</span>
+<span class="n">areas</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">geodata_to_properties</span><span class="p">(</span><span class="n">geojson</span><span class="p">,</span> <span class="s2">&quot;LAD&quot;</span><span class="p">,</span> <span class="mi">2025</span><span class="p">))</span>
 
-<span class="c1"># Join on the shared geography_code column</span>
-<span class="n">merged</span> <span class="o">=</span> <span class="n">geo_df</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">ons_df</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">&quot;geography_code&quot;</span><span class="p">)</span>
+<span class="c1"># Population of each local authority from Nomis: all persons, all ages</span>
+<span class="n">population</span> <span class="o">=</span> <span class="n">load_ons</span><span class="p">(</span>
+    <span class="s2">&quot;population&quot;</span><span class="p">,</span>
+    <span class="n">geography_type</span><span class="o">=</span><span class="s2">&quot;LAD&quot;</span><span class="p">,</span>
+    <span class="n">time</span><span class="o">=</span><span class="s2">&quot;latest&quot;</span><span class="p">,</span>
+    <span class="n">measures</span><span class="o">=</span><span class="mi">20100</span><span class="p">,</span>
+    <span class="n">gender</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">c_age</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+    <span class="n">select</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;geography_code&quot;</span><span class="p">,</span> <span class="s2">&quot;obs_value&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+
+<span class="c1"># Every dataset has a geography_code column, so they join directly</span>
+<span class="n">areas</span> <span class="o">=</span> <span class="n">areas</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">population</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">&quot;geography_code&quot;</span><span class="p">)</span>
+
+<span class="c1"># Your own postcodes, placed in the same local authorities</span>
+<span class="n">located</span> <span class="o">=</span> <span class="n">postcodes_to_geography</span><span class="p">([</span><span class="s2">&quot;SE13 7HX&quot;</span><span class="p">,</span> <span class="s2">&quot;SE6 4RU&quot;</span><span class="p">],</span> <span class="n">geography_type</span><span class="o">=</span><span class="s2">&quot;LAD&quot;</span><span class="p">)</span>
+<span class="n">located</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">population</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">&quot;geography_code&quot;</span><span class="p">)</span>
+<span class="c1">#    postcode geography_code geography_name  obs_value</span>
+<span class="c1"># 0  SE13 7HX      E09000023       Lewisham     301037</span>
+<span class="c1"># 1   SE6 4RU      E09000023       Lewisham     301037</span>
 </code></pre></div>
 <h2 id="bring-your-own-dataframe">Bring Your Own DataFrame</h2>
-<p>KindTech uses <a href="https://narwhals-dev.github.io/narwhals/">narwhals</a> for universal DataFrame support. The library itself has <strong>no pandas or polars dependency</strong> — it returns whatever backend you have installed.</p>
+<p>uk-open-data uses <a href="https://narwhals-dev.github.io/narwhals/">narwhals</a> for universal DataFrame support. The library itself has <strong>no pandas or polars dependency</strong> — it returns whatever backend you have installed.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># With pandas installed → returns pd.DataFrame</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">uk_open_data.ons</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_ons</span>
 <span class="n">df</span> <span class="o">=</span> <span class="n">load_ons</span><span class="p">(</span><span class="s2">&quot;NM_1_1&quot;</span><span class="p">)</span>
@@ -1250,7 +1277,7 @@ which subpackages are included and how they are released.</p>
 <p>If both are installed, polars is preferred (it's faster and more memory-efficient). The geo module returns plain GeoJSON dicts — no DataFrame backend needed.</p>
 <h2 id="why-does-this-exist">Why does this exist?</h2>
 <p>UK public data is powerful but painful to access programmatically. The ONS ArcGIS Geoportal has no developer documentation — just a point-and-click GUI. The REST API endpoint was discovered buried in the source code of an obscure UK government R package. NOMIS is slightly better documented but requires deep knowledge of SDMX query syntax and dataset codes that aren't surfaced anywhere obvious.</p>
-<p>Every charity, social enterprise, and researcher working with UK geographic or statistical data ends up reverse-engineering the same APIs independently. KindTech wraps them so you don't have to — two function calls instead of hours of documentation archaeology.</p>
+<p>Every charity, social enterprise, and researcher working with UK geographic or statistical data ends up reverse-engineering the same APIs independently. uk-open-data wraps them so you don't have to — two function calls instead of hours of documentation archaeology.</p>
 <h2 id="modules">Modules</h2>
 <ul>
 <li><a href="api/geo/"><strong>Geographic Data</strong></a> — UK boundary data from ArcGIS (LAD, LSOA, etc.)</li>
