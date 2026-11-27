@@ -1149,15 +1149,6 @@ def test_command_line_says_when_there_is_no_map(nomis, tmp_path, capsys):
         ]
     )
     assert code == EXIT_INPUT_ERROR
-    assert "no map" in capsys.readouterr().err
-
-
-def test_a_map_is_refused_before_the_analysis_runs(tmp_path, capsys):
-    path = tmp_path / "counts.csv"
-    path.write_text("group,count\nWhite British,120\nIndian,30\n", encoding="utf-8")
-    args = ["analysis", "run", ANALYSIS_ID, str(path)]
-    with mock.patch("uk_open_data.cli.run_analysis") as run:
-        code = main([*args, "--map", str(tmp_path / "map.svg")])
-    assert code == EXIT_INPUT_ERROR
     assert "This analysis has no map yet" in capsys.readouterr().err
-    run.assert_not_called()
+    # Refused before the run, so no census figures were fetched.
+    assert nomis.asked == []
