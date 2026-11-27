@@ -1,0 +1,33 @@
+# uk-open-data
+
+> UK open data in Python for charities, researchers and students: ONS geographic boundaries, Nomis statistics, postcode lookups and deprivation indices for all four nations, joined on a shared `geography_code` column. It also has analyses that answer a charity's questions from totals, a command line, and a connector for chat assistants over the Model Context Protocol.
+
+- Install with `uv add uk-open-data` and import `uk_open_data`. `kindtech` is the old name.
+- Statistics, postcode lookups, deprivation data and boundary properties (`geodata_to_properties`) share a `geography_code` column: join on it.
+- Loaders return the DataFrame library you have installed (polars if you have both), so install pandas or polars yourself. `load_geodata` returns GeoJSON.
+- The connector for chat assistants needs an extra: `uv add "uk-open-data[connector]"`, then `uk-open-data connector`.
+
+## Docs
+
+- [All docs in one file](https://kindtechuk.github.io/uk-open-data/llms-full.txt): every page below, as Markdown
+- [User guide overview](https://kindtechuk.github.io/uk-open-data/api/index.md): the modules and how they fit together
+- [Geographic data](https://kindtechuk.github.io/uk-open-data/api/geo/index.md): boundaries from the ONS Geoportal (LAD, LSOA, MSOA, ICB and more)
+- [ONS data](https://kindtechuk.github.io/uk-open-data/api/ons/index.md): statistics from the Nomis API, with dataset aliases
+- [Postcodes](https://kindtechuk.github.io/uk-open-data/api/postcodes/index.md): postcodes and outcodes to geography codes, through postcodes.io
+- [Deprivation (IMD)](https://kindtechuk.github.io/uk-open-data/api/imd/index.md): each nation's official index, and a composite to compare across nations
+- [Analyses](https://kindtechuk.github.io/uk-open-data/api/analyses/index.md): questions a charity asks of its own data, answered with totals, working and sources
+- [Command line](https://kindtechuk.github.io/uk-open-data/api/cli/index.md): `uk-open-data analysis run` on a file, without writing Python
+- [Connector for chat assistants](https://kindtechuk.github.io/uk-open-data/api/connector/index.md): the MCP server, its tools, and the rule that the assistant sees totals, never rows
+- [Data sources](https://kindtechuk.github.io/uk-open-data/api/data-sources/index.md): the APIs behind each loader and their quirks
+
+## Examples
+
+- [ONS statistics notebook](https://raw.githubusercontent.com/KindTechUK/uk-open-data/main/examples/ons_statistics.py): browse and load Nomis datasets (marimo)
+- [Geographic boundaries notebook](https://raw.githubusercontent.com/KindTechUK/uk-open-data/main/examples/geo_boundaries.py): explore UK boundaries (marimo)
+- [Boundaries plus statistics notebook](https://raw.githubusercontent.com/KindTechUK/uk-open-data/main/examples/geo_plus_ons.py): join boundaries with statistics (marimo)
+
+## Optional
+
+- [Case studies](https://kindtechuk.github.io/uk-open-data/case-studies/index.md): DataKind UK charity projects rebuilt with this package
+- [Package FAQ](https://kindtechuk.github.io/uk-open-data/faq/index.md): which subpackages are installed and how they are released
+- [README](https://raw.githubusercontent.com/KindTechUK/uk-open-data/main/README.md): overview, quick start, and how to contribute
