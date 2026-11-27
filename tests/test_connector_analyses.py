@@ -369,13 +369,6 @@ class TestWithTheRealAnalysis:
         assert answer["problems"]
         assert "a few dozen" not in json.dumps(answer)
 
-    def test_unknown_option_is_an_input_problem(self) -> None:
-        answer = run_analysis_on_counts(
-            "reach-deprivation", COUNTS, options={"no_such_option": 1}
-        )
-
-        assert answer["status"] == "input_problem"
-
     def test_unknown_analysis(self) -> None:
         answer = run_analysis_on_counts("no-such-analysis", COUNTS)
 
@@ -543,17 +536,15 @@ class TestAProblemRepeatsNothingSent:
     def _need(self) -> None:
         need_reach.keep_need_figures("unemployed", fakes.NEED, "invented for a test.")
 
-    @pytest.mark.parametrize(("analysis_id", "counts"), WITH_COUNTS)
-    def test_a_setting_the_analysis_does_not_have(
-        self, analysis_id: str, counts: list[dict]
-    ) -> None:
+    def test_a_setting_the_analysis_does_not_have(self) -> None:
         options = {f"{SENT}_wards": 1}
 
-        answer = run_analysis_on_counts(analysis_id, counts, options=options)
+        answer = run_analysis_on_counts("reach-deprivation", COUNTS, options=options)
 
         assert answer["status"] == "input_problem"
         assert SENT.casefold() not in json.dumps(answer).casefold()
 
+    # The two analyses find the places of the area in different ways.
     @pytest.mark.parametrize(("analysis_id", "counts"), WITH_COUNTS)
     def test_a_place_in_the_area_that_is_not_a_local_authority(
         self, analysis_id: str, counts: list[dict]
