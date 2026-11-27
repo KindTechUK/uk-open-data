@@ -1,8 +1,10 @@
 # uk-open-data
 
-UK open data for charities, in Python: geographic boundaries, official
-statistics, postcodes and deprivation indices, with analyses that join them to
-your own data and return figures you can check.
+UK open data in Python for civil society, from charities and community groups
+to researchers and students. Load public data from official sources, join it
+to your own, and get figures you can check. The first datasets are geographic
+boundaries, official statistics, postcodes and deprivation indices, with more
+on the way.
 
 Made by [KindTech UK](https://github.com/KindTechUK). Up to version 0.1 the
 package was called `kindtech`.
@@ -42,6 +44,47 @@ The `uk-open-data` package includes `uk_open_data.geo`, `uk_open_data.ons`,
 [package FAQ](https://kindtechuk.github.io/uk-open-data/faq/) for how these
 subpackages are installed and released together.
 
+## Quick start
+
+```python
+import pandas as pd  # or polars
+
+from uk_open_data import (
+    geodata_to_properties,
+    load_geodata,
+    load_ons,
+    postcodes_to_geography,
+)
+
+# Local authority boundaries from the ONS Geoportal
+geojson = load_geodata(geography_type="LAD", year="2025", boundary_type="BUC")
+areas = pd.DataFrame(geodata_to_properties(geojson, "LAD", 2025))
+
+# Population of each local authority from Nomis: all persons, all ages
+population = load_ons(
+    "population",
+    geography_type="LAD",
+    time="latest",
+    measures=20100,
+    gender=0,
+    c_age=200,
+    select=["geography_code", "obs_value"],
+)
+
+# Every dataset has a geography_code column, so they join directly
+areas = areas.merge(population, on="geography_code")
+
+# Your own postcodes, placed in the same local authorities
+located = postcodes_to_geography(["SE13 7HX", "SE6 4RU"], geography_type="LAD")
+located.merge(population, on="geography_code")
+#    postcode geography_code geography_name  obs_value
+# 0  SE13 7HX      E09000023       Lewisham     301037
+# 1   SE6 4RU      E09000023       Lewisham     301037
+```
+
+The [user guide](https://kindtechuk.github.io/uk-open-data/api/) covers each
+module.
+
 ## Examples
 
 Interactive notebooks you can run in the browser:
@@ -67,6 +110,38 @@ projects, each chaining several connectors on `geography_code`:
 
 See the [case studies](https://kindtechuk.github.io/uk-open-data/case-studies/) in
 the docs for the full write-ups and figures.
+
+## For students and researchers
+
+The same loaders work for coursework, a dissertation or a research project.
+Each one fetches from an official source, and
+[Data sources](https://kindtechuk.github.io/uk-open-data/api/data-sources/)
+explains the APIs behind them. The notebooks above run in the browser with
+nothing to install.
+
+Students and researchers are welcome to contribute: a new data source, a worked
+analysis, or a fix to the docs. Read the
+[contributing guide](https://github.com/KindTechUK/.github/blob/main/CONTRIBUTING.md)
+and [DEVELOPERS.md](https://github.com/KindTechUK/uk-open-data/blob/main/DEVELOPERS.md),
+then open an [issue](https://github.com/KindTechUK/uk-open-data/issues) to say
+what you would like to work on.
+
+## Use it from an AI assistant
+
+In Claude Code, install the plugin:
+
+```text
+/plugin marketplace add KindTechUK/plugins
+/plugin install uk-open-data@kindtech
+```
+
+For other assistants, the
+[connector](https://kindtechuk.github.io/uk-open-data/api/connector/) offers the
+analyses and data over the Model Context Protocol. Coding agents can read the
+docs as Markdown: [llms.txt](https://kindtechuk.github.io/uk-open-data/llms.txt)
+lists every page, and
+[llms-full.txt](https://kindtechuk.github.io/uk-open-data/llms-full.txt) holds
+them all in one file.
 
 ## Development
 

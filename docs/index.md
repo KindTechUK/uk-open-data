@@ -1,6 +1,10 @@
-# KindTech
+# uk-open-data
 
-Ergonomic Python access to UK public data. Geographic boundaries from the ONS ArcGIS Geoportal, statistics from the NOMIS API — with universal DataFrame support.
+UK open data in Python for civil society, from charities and community groups
+to researchers and students. Load public data from official sources, join it
+to your own, and get figures you can check. The first datasets are geographic
+boundaries, official statistics, postcodes and deprivation indices, with more
+on the way.
 
 ## Try it now — no install
 
@@ -42,30 +46,51 @@ Install [uk-open-data from PyPI](https://pypi.org/project/uk-open-data/):
 uv add uk-open-data
 ```
 
-KindTech depends on requests, narwhals, and python-calamine. You bring your own
+uk-open-data depends on requests, narwhals, and python-calamine. You bring your own
 DataFrame library (pandas or polars). The [package FAQ](faq/README.md) explains
 which subpackages are included and how they are released.
 
 ## Quick start
 
 ```python
-from uk_open_data import load_geodata, load_ons, geodata_to_properties
 import pandas as pd  # or polars
 
-# Load LAD boundaries (GeoJSON) and extract properties
-geojson = load_geodata(geography_type="LAD", year="2024")
-geo_df = pd.DataFrame(geodata_to_properties(geojson, "LAD", 2024))
+from uk_open_data import (
+    geodata_to_properties,
+    load_geodata,
+    load_ons,
+    postcodes_to_geography,
+)
 
-# Load ONS statistics — columns are normalised automatically
-ons_df = load_ons("population", geography_type="LAD", time="latest")
+# Local authority boundaries from the ONS Geoportal
+geojson = load_geodata(geography_type="LAD", year="2025", boundary_type="BUC")
+areas = pd.DataFrame(geodata_to_properties(geojson, "LAD", 2025))
 
-# Join on the shared geography_code column
-merged = geo_df.merge(ons_df, on="geography_code")
+# Population of each local authority from Nomis: all persons, all ages
+population = load_ons(
+    "population",
+    geography_type="LAD",
+    time="latest",
+    measures=20100,
+    gender=0,
+    c_age=200,
+    select=["geography_code", "obs_value"],
+)
+
+# Every dataset has a geography_code column, so they join directly
+areas = areas.merge(population, on="geography_code")
+
+# Your own postcodes, placed in the same local authorities
+located = postcodes_to_geography(["SE13 7HX", "SE6 4RU"], geography_type="LAD")
+located.merge(population, on="geography_code")
+#    postcode geography_code geography_name  obs_value
+# 0  SE13 7HX      E09000023       Lewisham     301037
+# 1   SE6 4RU      E09000023       Lewisham     301037
 ```
 
 ## Bring Your Own DataFrame
 
-KindTech uses [narwhals](https://narwhals-dev.github.io/narwhals/) for universal DataFrame support. The library itself has **no pandas or polars dependency** — it returns whatever backend you have installed.
+uk-open-data uses [narwhals](https://narwhals-dev.github.io/narwhals/) for universal DataFrame support. The library itself has **no pandas or polars dependency** — it returns whatever backend you have installed.
 
 ```python
 # With pandas installed → returns pd.DataFrame
@@ -87,7 +112,7 @@ If both are installed, polars is preferred (it's faster and more memory-efficien
 
 UK public data is powerful but painful to access programmatically. The ONS ArcGIS Geoportal has no developer documentation — just a point-and-click GUI. The REST API endpoint was discovered buried in the source code of an obscure UK government R package. NOMIS is slightly better documented but requires deep knowledge of SDMX query syntax and dataset codes that aren't surfaced anywhere obvious.
 
-Every charity, social enterprise, and researcher working with UK geographic or statistical data ends up reverse-engineering the same APIs independently. KindTech wraps them so you don't have to — two function calls instead of hours of documentation archaeology.
+Every charity, social enterprise, and researcher working with UK geographic or statistical data ends up reverse-engineering the same APIs independently. uk-open-data wraps them so you don't have to — two function calls instead of hours of documentation archaeology.
 
 ## Modules
 

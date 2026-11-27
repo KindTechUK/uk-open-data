@@ -1,0 +1,14 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "uk-open-data",
+  "description": "UK open data in Python for civil society, from charities and community groups to researchers and students. Loads public data from official sources and joins it to your own. Covers boundaries, Nomis statistics, postcodes and deprivation indices so far, with more datasets on the way. Also analyses for charities, a command line and an MCP connector.",
+  "folders": ["docs"],
+  "excludeFolders": ["docs/blog"],
+  "rules": [
+    "Install with `uv add uk-open-data` and import `uk_open_data`. `kindtech` is the old name.",
+    "Statistics, postcode lookups, deprivation data and boundary properties (`geodata_to_properties`) share a `geography_code` column: join on it.",
+    "Loaders return the DataFrame library you have installed (polars if you have both), so install pandas or polars yourself. `load_geodata` returns GeoJSON.",
+    "Nomis tables can be split by age, sex and measure; pass filters such as `measures`, `gender` and `c_age` to `load_ons` to get one row per area.",
+    "The connector for chat assistants needs an extra: `uv add \"uk-open-data[connector]\"`, then `uk-open-data connector`."
+  ]
+}
