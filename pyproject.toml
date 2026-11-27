@@ -10,6 +10,33 @@ readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
 requires-python = ">=3.10"
+keywords = [
+    "uk",
+    "open-data",
+    "ons",
+    "nomis",
+    "census",
+    "postcodes",
+    "imd",
+    "deprivation",
+    "geospatial",
+    "charity",
+    "research",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
 dependencies = [
     "requests>=2.28",
     "narwhals>=2.18.0",
@@ -23,6 +50,7 @@ kindtech = "uk_open_data.cli:main"
 [project.urls]
 Homepage = "https://github.com/KindTechUK/uk-open-data"
 Documentation = "https://kindtechuk.github.io/uk-open-data/"
+"llms.txt" = "https://kindtechuk.github.io/uk-open-data/llms.txt"
 Repository = "https://github.com/KindTechUK/uk-open-data"
 Issues = "https://github.com/KindTechUK/uk-open-data/issues"
 
