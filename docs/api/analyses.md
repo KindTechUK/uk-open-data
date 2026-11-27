@@ -66,7 +66,8 @@ To run an analysis on a file without writing Python, use the
 
 Returns an `AnalysisInfo` for every analysis: its `id`, `title`, the `question` it
 answers, a `summary`, its `roles` (the columns it can use), its `input_modes`
-(the shapes of data it accepts), its `options` and its `coverage`.
+(the shapes of data it accepts), its `options`, its `coverage`, and `has_map`,
+which is `False` for an analysis that has no map yet.
 
 Every option has two names. `name` is its code name, the one a call is
 written with, such as `catchment`. `label` is its short plain name, such as
@@ -421,6 +422,15 @@ hidden with it. So a hidden count is not always small: do not report a hidden
 cell as "fewer than 5". Every result says this in its privacy notes. Change
 the threshold with the `suppress_below` option; it cannot go below 3.
 
+The people a result leaves out are counted like any group: those who live
+outside the area you serve, those who could not be placed, and, when the
+groups are people's own labels, those matched to no group. When fewer than 5
+are in one of them, the warnings and the working say "fewer than 5", never
+the number. A total that would give the number away when taken from another,
+such as `people_located` or `people_supplied`, is `None`, with `suppressed`
+set to `True` and a note that says why. The total the figures are about is
+always shown.
+
 A result says which threshold was used in `privacy.suppress_below`. The analyses
 about sites, provision gap and access and distance, hide nothing, and for them
 it is `None`.
@@ -457,6 +467,15 @@ hold at least 5% of the people it could place. The decile figures and the map
 are about the people who live there, so they can be set against everyone who
 lives there. People outside the area you serve are counted in the local authority
 table, and a warning says how many there are.
+
+The people left out are counted like any group. When fewer than 5 live
+outside the area you serve, or fewer than 5 could not be placed, the warnings
+and the working say "fewer than 5". `people_located` and `people_supplied`
+are then hidden when taking one total from another would give that number
+away. When `people_located` is hidden, so are the unnamed row of the local
+authority table and the shares in that table, because they would give it
+away too. `people_in_catchment` is always shown, because the decile figures
+are about those people.
 
 | Figure | Meaning |
 | --- | --- |
@@ -613,6 +632,13 @@ by saying how many are not counted. When some of them could not be placed in
 any local authority, which is a name or a postcode to put right, and others
 live outside the area, which is not a mistake, it says how many of each.
 
+The people left out are counted like any group. When fewer than 5 live
+outside the area you serve, or fewer than 5 could not be placed, the warnings
+and the working say "fewer than 5". `people_located` and `people_supplied`
+are then hidden when taking one total from another would give that number
+away. `people_in_catchment` is always shown, because every figure is about
+those people. The answer goes by the totals that are shown.
+
 When only one local authority is compared every share is 100%, so
 `key_figures` names the rate and the two counts behind it instead:
 `reach_per_100_in_need`, `people_in_catchment` and `people_in_need`.
@@ -700,7 +726,7 @@ Choose what the column holds with the `characteristic` option:
 Labels are matched by their wording. "Black Caribbean" is Black, "White and
 Black Caribbean" is Mixed, "Any other ethnic group" is Other, and "Not stated"
 matches nothing. People whose label matches nothing are counted, left out of
-the shares, and a warning says how many there are. Codes and short forms
+the shares, and a warning says how many there are, or "fewer than 5". Codes and short forms
 cannot be matched by wording, so say where they belong with the `groups`
 option:
 
@@ -753,6 +779,15 @@ keep_residents(
 | `groups_under_represented` | Groups you reach less than their share of residents |
 | `share_of_people_first_group` | Share of your people in the first of those groups |
 | `share_of_residents_first_group` | Share of residents in that group |
+
+The people left out are counted like any group: those matched to no group,
+those who live outside the area you serve, and those who could not be placed.
+When fewer than 5 are in one of them, the warnings and the working say "fewer
+than 5" and `people_not_matched` is hidden. `people_in_catchment` and
+`people_supplied` are then hidden when taking one total from another would
+give that number away. `people_matched` is always shown, because the shares
+are of those people. When `people_not_matched` is hidden, `residents` takes
+its place in `key_figures`.
 
 The last two are the two shares the answer quotes, each with its value before
 rounding. They are there when the answer quotes them: when a group is reached

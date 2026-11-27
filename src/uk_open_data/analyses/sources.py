@@ -2,12 +2,30 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from uk_open_data.analyses._model import Source
 from uk_open_data.imd.api import ENGLAND_IMD_2025_URL
 from uk_open_data.ons._catalog import find_tables
 from uk_open_data.ons.api import NOMIS_BASE_URL
 from uk_open_data.postcodes.api import POSTCODES_BASE_URL
 from uk_open_data.postcodes.offline import SOURCE_NAME, SOURCE_URL
+
+# Said in the working when figures were read from a copy kept on this machine.
+KEPT_COPY_USED = "A copy kept on this machine was used, so nothing was fetched."
+
+
+def kept_copy(source: Source, note: str) -> Source:
+    """Cite ``source`` as read from a copy kept on this machine.
+
+    Args:
+        source: The published source the copy was taken from.
+        note: Where the copy came from, as it was kept with the copy.
+    """
+    return replace(
+        source, edition=f"{source.edition}. A copy kept on this machine, {note}"
+    )
+
 
 IOD_2025 = Source(
     id="iod-2025",

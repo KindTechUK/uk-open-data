@@ -369,13 +369,6 @@ class TestWithTheRealAnalysis:
         assert answer["problems"]
         assert "a few dozen" not in json.dumps(answer)
 
-    def test_unknown_option_is_an_input_problem(self) -> None:
-        answer = run_analysis_on_counts(
-            "reach-deprivation", COUNTS, options={"no_such_option": 1}
-        )
-
-        assert answer["status"] == "input_problem"
-
     def test_unknown_analysis(self) -> None:
         answer = run_analysis_on_counts("no-such-analysis", COUNTS)
 
@@ -524,6 +517,75 @@ class TestWithTheSecondAnalysis:
 
         assert answer["status"] == "ok"
         assert "ZZ99" not in json.dumps(answer)
+
+
+# An invented name, sent as a setting. A problem must not say it back.
+SENT = "Riverton"
+WITH_COUNTS = [("reach-deprivation", COUNTS), ("need-reach", COUNCIL_COUNTS)]
+
+
+@pytest.mark.usefixtures("england")
+class TestAProblemRepeatsNothingSent:
+    """A problem with the settings points at what to fix, not at what was sent.
+
+    Setting names and values come from the person, so a message does not say
+    them back, not even the name of a setting the analysis does not have.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _need(self) -> None:
+        need_reach.keep_need_figures("unemployed", fakes.NEED, "invented for a test.")
+
+    def test_a_setting_the_analysis_does_not_have(self) -> None:
+        options = {f"{SENT}_wards": 1}
+
+        answer = run_analysis_on_counts("reach-deprivation", COUNTS, options=options)
+
+        assert answer["status"] == "input_problem"
+        assert SENT.casefold() not in json.dumps(answer).casefold()
+
+    # The two analyses find the places of the area in different ways.
+    @pytest.mark.parametrize(("analysis_id", "counts"), WITH_COUNTS)
+    def test_a_place_in_the_area_that_is_not_a_local_authority(
+        self, analysis_id: str, counts: list[dict]
+    ) -> None:
+        options = {"catchment": ["Lewisham", f"{SENT} Ward"]}
+
+        answer = run_analysis_on_counts(analysis_id, counts, options=options)
+
+        assert answer["status"] == "input_problem"
+        assert answer["option"] == "catchment"
+        assert SENT.casefold() not in json.dumps(answer).casefold()
+
+    def test_an_entry_the_need_does_not_take(self) -> None:
+        need = {"dataset": "NM_1_1", "label": "People", f"{SENT}_note": "x"}
+
+        answer = run_analysis_on_counts(
+            "need-reach", COUNCIL_COUNTS, options={"need": need}
+        )
+
+        assert answer["status"] == "input_problem"
+        assert answer["option"] == "need"
+        assert SENT.casefold() not in json.dumps(answer).casefold()
+
+    def test_a_need_table_that_cannot_be_loaded(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        dataset = f"NM_{SENT}_1"
+
+        def missing(*args: object, **kwargs: object) -> None:
+            raise ValueError(f"NOMIS dataset '{dataset}' does not exist.")
+
+        monkeypatch.setattr(_need, "load_ons", missing)
+        need = {"dataset": dataset, "label": "People"}
+
+        answer = run_analysis_on_counts(
+            "need-reach", COUNCIL_COUNTS, options={"need": need}
+        )
+
+        assert answer["status"] == "input_problem"
+        assert answer["option"] == "need"
+        assert SENT.casefold() not in json.dumps(answer).casefold()
 
 
 GROUP_COUNTS = [

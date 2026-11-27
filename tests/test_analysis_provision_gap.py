@@ -334,6 +334,31 @@ def test_rows_that_cannot_be_placed_are_counted_not_named(nomis):
     assert "Narnia" not in json.dumps(result.to_dict())
 
 
+def test_a_row_with_no_place_is_left_out_whatever_its_volume(nomis):
+    rows = [*SPREAD, {"Area": "", "Sessions": ""}, {"Area": None, "Sessions": "?"}]
+    result = _run(rows)
+    assert result.figure("volume_located").value == 160
+    assert any(w.startswith("2 rows had no local authority") for w in result.warnings)
+
+
+def test_fractions_of_provision_all_in_the_area_leave_none_outside(nomis):
+    # Added in another order, 0.1, 0.7 and 0.2 do not make 1.0 in floats.
+    rows = _volumes(Lewisham=0.1, Greenwich=0.7, Adur=0.2)
+    result = _run(rows, options={"catchment": ["Lewisham", "Greenwich", "Adur"]})
+    assert not any("outside the area you serve" in w for w in result.warnings)
+
+
+def test_an_area_where_the_need_counts_nobody_is_an_input_error(nomis):
+    keep_need_figures(
+        "residents",
+        [("E09000023", "Lewisham", 0), ("E09000011", "Greenwich", 0)],
+        "invented for a test.",
+    )
+    with pytest.raises(AnalysisInputError, match="count nobody") as raised:
+        _run(_volumes(Lewisham=10), options={"need": "residents"})
+    assert raised.value.option == "need"
+
+
 @pytest.mark.parametrize("volume", ["lots", "", None, -3, "nan", "inf", True])
 def test_a_volume_that_is_not_a_number_is_an_input_error(nomis, volume):
     rows = [*SPREAD, {"Area": "Cardiff", "Sessions": volume}]

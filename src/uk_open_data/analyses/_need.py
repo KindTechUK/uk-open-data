@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
@@ -30,7 +30,7 @@ from uk_open_data.analyses._steps import (
     plural,
     where_rows,
 )
-from uk_open_data.analyses.sources import nomis_table
+from uk_open_data.analyses.sources import KEPT_COPY_USED, kept_copy, nomis_table
 from uk_open_data.ons import load_ons
 
 DEFAULT_TOP = 10
@@ -192,9 +192,11 @@ def _custom_measure(wanted: Mapping[str, Any]) -> Measure:
             f"codes, and cannot set {', '.join(RESERVED_FILTERS)}."
         )
     if unknown:
+        # The names are not repeated: they came from the person.
+        entries = "an entry" if len(unknown) == 1 else f"{len(unknown)} entries"
         problems.append(
-            f"{said('need')} has no entry called {', '.join(unknown)}. It "
-            "takes 'dataset', 'label' and 'filters'."
+            f"{said('need')} has {entries} it does not take. It takes only "
+            "'dataset', 'label' and 'filters'."
         )
     if problems:
         raise AnalysisInputError(problems, option="need")
@@ -294,19 +296,18 @@ def _kept_or_fetched(
     """
     if kept is not None:
         rows, note = kept
-        cited = replace(
-            source, edition=f"{source.edition}. A copy kept on this machine, {note}"
-        )
-        return (
-            rows,
-            cited,
-            "A copy kept on this machine was used, so nothing was fetched.",
-        )
+        return rows, kept_copy(source, note), KEPT_COPY_USED
     try:
         rows = _fetch_need(measure.dataset, json.dumps(measure.filters, sort_keys=True))
     except (TypeError, ValueError) as error:
-        msg = f"The need figures could not be loaded from Nomis. {error}"
-        raise AnalysisInputError(msg) from error
+        # The error's own text can name the table a person gave, so it is
+        # left out and the message says what to check instead.
+        msg = (
+            "The need figures could not be loaded from Nomis. Check that "
+            f"{said('need')} names a table Nomis publishes by local authority, "
+            "and that its filters are category names and codes."
+        )
+        raise AnalysisInputError(msg, option="need") from error
     return rows, source, "Fetched from Nomis."
 
 
@@ -534,6 +535,24 @@ def guess_compared(
         named=False,
         guessed=True,
     )
+
+
+def require_some_need(need: Sequence[float], label: str) -> None:
+    """Stop when the need figures count nobody in the area compared.
+
+    Every rate and share is set against the total, so with none there is no
+    answer to give.
+
+    Raises:
+        AnalysisInputError: If the need in the area adds up to zero.
+    """
+    if sum(need) > 0:
+        return
+    msg = (
+        f"The need figures count nobody in the area you serve ({label}). "
+        f"Check {said('need')} and {said('catchment')}."
+    )
+    raise AnalysisInputError(msg, option="need")
 
 
 def high_need_cut(need: list[float]) -> float:

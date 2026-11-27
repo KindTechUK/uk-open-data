@@ -446,6 +446,52 @@ def test_report_goes_to_its_file_when_the_map_is_not_drawn(
     assert MAP_NOT_DRAWN in capsys.readouterr().err
 
 
+def test_an_unknown_map_layer_is_refused_before_anything_is_fetched(
+    index, counts_file, tmp_path, capsys
+):
+    with mock.patch("uk_open_data.cli.load_map_boundaries") as fetch:
+        status = main(
+            _run_args(
+                counts_file,
+                "--map",
+                str(tmp_path / "map.svg"),
+                "--map-layer",
+                "Riverton",
+            )
+        )
+    shown = capsys.readouterr()
+    assert status == EXIT_INPUT_ERROR
+    assert "The map has no layer of that name" in shown.err
+    assert "Riverton" not in shown.err
+    fetch.assert_not_called()
+
+
+def test_outlines_that_match_no_area_leave_the_report(
+    index, counts_file, tmp_path, capsys
+):
+    elsewhere = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {"LSOA21CD": "E01999999"},
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[[0, 51], [0.01, 51], [0.01, 51.01], [0, 51]]],
+                },
+            }
+        ],
+    }
+    picture = tmp_path / "map.svg"
+    with mock.patch("uk_open_data.cli.load_map_boundaries", return_value=elsewhere):
+        status = main(_run_args(counts_file, "--map", str(picture)))
+    shown = capsys.readouterr()
+    assert status == EXIT_MAP_NOT_DRAWN
+    assert "most deprived" in shown.out
+    assert shown.err == f"{MAP_BEING_FETCHED}\n{MAP_NOT_DRAWN}\n"
+    assert not picture.exists()
+
+
 def test_connector_command_passes_its_options_on(capsys):
     with mock.patch("uk_open_data.connector.command.main") as start:
         status = main(["connector", "--transport", "streamable-http", "--port", "9"])

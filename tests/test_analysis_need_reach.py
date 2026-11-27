@@ -866,7 +866,9 @@ def test_the_area_is_worked_out_from_where_most_people_live(nomis):
         "Each of these local authorities holds at least 5% of the people located."
     )
     assert any(w.startswith(GUESSED) for w in result.warnings)
-    assert any(w.startswith("3 people live outside") for w in result.warnings)
+    assert any(
+        w.startswith("Fewer than 5 people live outside") for w in result.warnings
+    )
 
 
 def test_the_share_that_joins_a_place_to_the_area_can_be_changed(nomis):
@@ -910,6 +912,36 @@ def test_one_place_alone_is_not_called_a_gap(nomis):
         "people_in_catchment",
         "people_in_need",
     )
+
+
+def test_a_few_people_left_out_cannot_be_worked_out_from_the_totals(nomis):
+    # 2 of 207 people live in Darlington, under 5%, so outside the area worked
+    # out. Taking one total from another must not give the 2 away.
+    result = _run(_counts(Lewisham=120, Greenwich=85, Darlington=2))
+    assert result.figure("people_in_catchment").value == 205
+    for figure_id in ("people_located", "people_supplied"):
+        figure = result.figure(figure_id)
+        assert (figure.value, figure.suppressed) == (None, True)
+        assert figure.note == (
+            "Hidden so a small number of people left out cannot be worked out."
+        )
+    said = [
+        *result.warnings,
+        *(f"{step.title}. {step.detail}" for step in result.working),
+        result.answer,
+    ]
+    assert [
+        text for text in said if "207" in text or re.search(r"\b2 (people|live)", text)
+    ] == []
+    assert 207 not in {
+        n for step in result.working for n in (step.rows_in, step.rows_out)
+    }
+    assert (
+        "Fewer than 5 people live outside the area you serve and are left out. "
+        "Change 'Area you serve' to include them."
+    ) in result.warnings
+    step = next(s for s in result.working if s.title == "Set the area you serve")
+    assert "205 of the people located live in it" in step.detail
 
 
 def test_a_named_area_is_not_called_worked_out(nomis):
@@ -1001,7 +1033,9 @@ def test_postcodes_are_placed_in_local_authorities_online(nomis):
     # Cardiff's 3 is hidden, and Greenwich's 12 with it so it cannot be worked out.
     assert rows["Cardiff"]["suppressed"] is True
     assert rows["Greenwich"]["suppressed"] is True
-    assert any(w.startswith("2 people were placed outside") for w in result.warnings)
+    assert any(
+        w.startswith("Fewer than 5 people were placed outside") for w in result.warnings
+    )
     assert "local authorities" in result.privacy.sent_to_third_parties[0]
     source = next(s for s in result.sources if s.id == "postcodes-io")
     assert source.used_for == "Finding the local authority each postcode is in."
@@ -1042,6 +1076,16 @@ def test_no_postcode_reaches_the_result(nomis):
 
 
 # --- the map ---------------------------------------------------------------
+
+
+def test_map_by_count_says_why_when_residents_are_missing_for_a_place(nomis):
+    # The residents were fetched, but one place has none, so there is no rate.
+    nomis.residents = {**RESIDENTS, "Adur": 0}
+    result = _run_wide(_counts(Lewisham=60, Greenwich=30, Adur=10))
+    assert result.map.layers[0].label == "People in need"
+    choice = next(c for c in result.choices if c.id == "map_need")
+    assert "kept on this machine" not in choice.reason
+    assert "not known for every local authority" in choice.reason
 
 
 def test_map_is_described_by_local_authority(nomis):
@@ -1358,10 +1402,10 @@ def test_result_explains_itself(nomis):
     assert options["need"] == "unemployed"
     again = _run(_counts(Lewisham=60, Greenwich=30, Adur=10), options=options)
     assert again.answer == result.answer
-    # A share hidden to protect a small count has no exact value either.
+    # A figure hidden to protect a small count has no exact value either.
     hidden = _run(_counts(Lewisham=60, Greenwich=3, Adur=10, Cardiff=30))
     check_working(hidden)
-    assert [f.exact for f in hidden.figures if f.suppressed] in ([], [None])
+    assert [f.exact for f in hidden.figures if f.suppressed] == [None, None]
     # Every column has a plain heading to show in place of its id.
     assert not [
         column

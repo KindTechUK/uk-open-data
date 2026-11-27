@@ -70,6 +70,7 @@ from uk_open_data.analyses._need import (
     not_listed_rows,
     read_measure,
     read_top,
+    require_some_need,
 )
 from uk_open_data.analyses._steps import (
     EVERYWHERE,
@@ -339,9 +340,19 @@ def _amount(raw: Any) -> float | None:
     return amount if 0 <= amount < float("inf") else None
 
 
-def _amounts(raw: list[Any]) -> list[float]:
-    """Read the volume column, and stop when a row has no usable number."""
-    amounts = [_amount(value) for value in raw]
+def _amounts(raw: list[Any], skip: list[bool] | None = None) -> list[float]:
+    """Read the volume column, and stop when a row has no usable number.
+
+    Args:
+        raw: The volume column.
+        skip: True for each row that is left out anyway. Its volume is not
+            checked: it is read when it is a number, and as zero when not.
+    """
+    left_out = skip or [False] * len(raw)
+    amounts = [
+        (_amount(value) or 0.0) if skipped else _amount(value)
+        for value, skipped in zip(raw, left_out, strict=True)
+    ]
     bad = [row for row, amount in enumerate(amounts, start=1) if amount is None]
     if bad:
         what = "provision that is not a number of zero or more"
@@ -379,8 +390,11 @@ def _volume_by_authority(
     authorities: dict[str, Authority],
     trail: Trail,
 ) -> tuple[Counter[str], float]:
-    """Total the volume given for each local authority name or code."""
-    amounts = _amounts(raw)
+    """Total the volume given for each local authority name or code.
+
+    A row with no local authority is left out, so its volume is not checked.
+    """
+    amounts = _amounts(raw, skip=[is_blank(place) for place in places])
     by_key = {code.casefold(): code for code in authorities}
     by_key.update({area.name.casefold(): code for code, area in authorities.items()})
     totals: Counter[str] = Counter()
@@ -491,7 +505,12 @@ def _rows(
             f"Check {said('catchment')}."
         )
         raise AnalysisInputError(msg, option="catchment")
-    _warn_about_area(sum(located.values()) - inside, with_provision, compared, trail)
+    # Added up from the places outside, not taken from the total, so that the
+    # order floats are added in cannot leave a crumb of provision outside.
+    in_area = set(compared.codes)
+    outside = sum(amount for code, amount in located.items() if code not in in_area)
+    _warn_about_area(outside, with_provision, compared, trail)
+    require_some_need(need, compared.label)
     cut = high_need_cut(need)
     high = [amount >= cut and amount > 0 for amount in need]
     need_bands = band_by_need(need)

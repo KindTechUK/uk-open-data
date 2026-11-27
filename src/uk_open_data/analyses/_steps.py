@@ -8,12 +8,13 @@ them keeps or reports a value from the data.
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, replace
 from typing import Any
 
 import narwhals as nw
 
+from uk_open_data.analyses._answers import sentence_case
 from uk_open_data.analyses._inputs import is_blank, tidy_postcode, to_count
 from uk_open_data.analyses._labels import LABELS, said
 from uk_open_data.analyses._model import (
@@ -24,7 +25,7 @@ from uk_open_data.analyses._model import (
     Source,
     Step,
 )
-from uk_open_data.analyses._privacy import DEFAULT_SUPPRESS_BELOW
+from uk_open_data.analyses._privacy import DEFAULT_SUPPRESS_BELOW, LeftOut, is_small
 from uk_open_data.analyses.sources import POSTCODES_IO, ons_postcode_lookup
 from uk_open_data.postcodes import (
     PostcodeTableError,
@@ -141,6 +142,26 @@ def where_rows(positions: list[int]) -> str:
     return f"{listed}, counting from the first row of data"
 
 
+def which_entries(positions: list[int], given: int) -> str:
+    """Say which entries of a list a person gave are meant, by their place in it.
+
+    A place in the list says nothing of what the entry holds, so a message
+    can point at it without repeating what the person wrote. The first entry
+    is number 1.
+    """
+    if given == 1:
+        return "the only one given"
+    shown = [str(position) for position in positions[:ROWS_NAMED]]
+    more = len(positions) - len(shown)
+    if more:
+        listed = f"numbers {', '.join(shown)} and {more} more"
+    elif len(shown) == 1:
+        listed = f"number {shown[0]}"
+    else:
+        listed = f"numbers {', '.join(shown[:-1])} and {shown[-1]}"
+    return f"{listed} of the {given} given"
+
+
 def bad_counts(positions: list[int], what: str) -> str:
     """Say which rows hold a count or volume that cannot be added up."""
     return (
@@ -234,11 +255,16 @@ def named_areas(
         return tuple(codes), whole.capitalize()
     by_key = {code.casefold(): code for code in names}
     by_key.update({name.casefold(): code for code, name in names.items()})
-    unknown = [item for item in cleaned if item.casefold() not in by_key]
+    unknown = [
+        position
+        for position, item in enumerate(cleaned, start=1)
+        if item.casefold() not in by_key
+    ]
     if unknown:
         msg = (
             f"These entries in {said('catchment')} are not local authorities "
-            f"in the {listed_in}: {', '.join(unknown)}. {HOW_TO_NAME_A_PLACE}"
+            f"in the {listed_in}: {which_entries(unknown, len(cleaned))}. "
+            f"{HOW_TO_NAME_A_PLACE}"
         )
         raise AnalysisInputError(msg, option="catchment")
     chosen = sorted({by_key[item.casefold()] for item in cleaned})
@@ -248,26 +274,47 @@ def named_areas(
 # --- reading the input -----------------------------------------------------
 
 
-def count_by_postcode(
-    values: list[Any],
-    use_table: bool,
-    trail: Trail,
-    level: Level = NEIGHBOURHOOD,
-) -> tuple[Counter[str], int]:
-    """Place each row's postcode in an area and count rows per area.
+@dataclass(frozen=True)
+class Placed:
+    """Where each row's postcode is, and how many rows could not be placed."""
 
-    Args:
-        values: The postcode column.
-        use_table: Look postcodes up on this machine when True, and with
-            postcodes.io when False.
-        trail: Where the steps, warnings, sources and choices are recorded.
-        level: The size of area to place postcodes in.
+    codes: list[str | None]
+    blank: int
+    malformed: int
+    not_found: int
+    distinct: int
+    where: str
+    use_table: bool
+    level: Level
 
-    Returns:
-        Rows per area code, and the number of rows supplied.
-    """
-    placed = place_postcodes(values, use_table, trail, level)
-    return Counter(code for code in placed if code is not None), len(values)
+    @property
+    def supplied(self) -> int:
+        """The rows given, one per person."""
+        return len(self.codes)
+
+    @property
+    def usable(self) -> int:
+        """The rows with something shaped like a postcode."""
+        return self.supplied - self.blank - self.malformed
+
+    @property
+    def found(self) -> int:
+        """The rows whose postcode was found."""
+        return self.usable - self.not_found
+
+    @property
+    def counts(self) -> Counter[str]:
+        """Rows per area code."""
+        return Counter(code for code in self.codes if code is not None)
+
+    @property
+    def left_out(self) -> tuple[tuple[int, ...], ...]:
+        """The rows left out, from the rows found out to the rows given.
+
+        Ready to follow the groups an analysis leaves out in
+        :func:`uk_open_data.analyses._privacy.hide_totals`.
+        """
+        return (self.not_found,), (self.blank, self.malformed)
 
 
 def place_postcodes(
@@ -289,27 +336,84 @@ def place_postcodes(
         One area code per row, in row order. None where the row has no
         postcode, or one that is malformed or not found.
     """
-    tidy, blank, malformed = read_postcode_column(values, trail)
+    placed = find_postcodes(values, use_table, trail, level)
+    note_placed(placed, trail)
+    return placed.codes
+
+
+def find_postcodes(
+    values: list[Any],
+    use_table: bool,
+    trail: Trail,
+    level: Level = NEIGHBOURHOOD,
+) -> Placed:
+    """Place each row's postcode in an area, and say nothing yet of the rows.
+
+    The sources, choices and what was sent are recorded. The steps and
+    warnings that count rows are left for :func:`note_placed`, so an analysis
+    can first decide which totals it may show.
+
+    Args:
+        values: The postcode column.
+        use_table: Look postcodes up on this machine when True, and with
+            postcodes.io when False.
+        trail: Where the sources, choices and what was sent are recorded.
+        level: The size of area to place postcodes in.
+    """
+    tidy, blank, malformed = _tidy_postcode_column(values)
     usable = [postcode for postcode in tidy if postcode is not None]
     distinct = sorted(set(usable))
     lookup = _look_up_on_this_machine if use_table else _look_up_online
     found_for, where = lookup(distinct, trail, level)
-    placed = [None if postcode is None else found_for[postcode] for postcode in tidy]
-    found = sum(1 for code in placed if code is not None)
-    not_found = len(usable) - found
+    codes = [None if postcode is None else found_for[postcode] for postcode in tidy]
+    found = sum(1 for code in codes if code is not None)
+    return Placed(
+        codes=codes,
+        blank=blank,
+        malformed=malformed,
+        not_found=len(usable) - found,
+        distinct=len(distinct),
+        where=where,
+        use_table=use_table,
+        level=level,
+    )
+
+
+def note_placed(placed: Placed, trail: Trail, privacy: LeftOut | None = None) -> None:
+    """Write the steps and warnings that say how many rows were placed.
+
+    Args:
+        placed: The rows, as :func:`find_postcodes` placed them.
+        trail: Where the steps and warnings are recorded.
+        privacy: Which totals may be shown, and how to say a few rows left
+            out, when the rows are people. Left out, every count is given.
+    """
     trail.working.append(
-        Step(
-            title=f"Found the {level.singular} for each postcode",
-            detail=(
-                f"{len(distinct)} distinct postcodes were looked up {where}. "
-                f"{not_found} rows had a postcode that was not found."
-            ),
-            rows_in=len(usable),
-            rows_out=found,
+        _postcode_column_step(
+            placed.supplied, placed.blank, placed.malformed, placed.usable, privacy
         )
     )
-    warn_left_out(blank, malformed, not_found, use_table, trail)
-    return placed
+    count, total = _say(privacy)
+    trail.working.append(
+        Step(
+            title=f"Found the {placed.level.singular} for each postcode",
+            detail=(
+                f"{placed.distinct} distinct postcodes were looked up "
+                f"{placed.where}. {sentence_case(count(placed.not_found))} rows had a "
+                "postcode that was not found."
+            ),
+            rows_in=total(placed.usable),
+            rows_out=total(placed.found),
+        )
+    )
+    warn_left_out(
+        placed.blank,
+        placed.malformed,
+        placed.not_found,
+        placed.use_table,
+        trail,
+        privacy,
+    )
 
 
 def locate_postcodes(values: list[Any], trail: Trail) -> list[Position | None]:
@@ -389,30 +493,66 @@ def read_postcode_column(
         The tidied postcode of each row, or None where it has none or one that
         is malformed. Then how many rows were blank, and how many malformed.
     """
-    supplied = len(values)
+    tidy, blank, malformed = _tidy_postcode_column(values)
+    usable = len(values) - blank - malformed
+    trail.working.append(_postcode_column_step(len(values), blank, malformed, usable))
+    return tidy, blank, malformed
+
+
+def _tidy_postcode_column(values: list[Any]) -> tuple[list[str | None], int, int]:
+    """Tidy the postcode column, and stop when no row can be used. Write nothing."""
     blank = sum(1 for value in values if is_blank(value))
     tidy = [tidy_postcode(value) for value in values]
     usable = sum(1 for postcode in tidy if postcode is not None)
-    malformed = supplied - blank - usable
-    trail.working.append(
-        Step(
-            title="Read the postcode column",
-            detail=(
-                f"{supplied} rows. {blank} had no postcode and {malformed} "
-                "held something that is not shaped like a UK postcode. "
-                "Those rows were left out and were not sent anywhere."
-            ),
-            rows_in=supplied,
-            rows_out=usable,
-        )
-    )
     if not usable:
         msg = (
             "None of the rows holds something shaped like a UK postcode. "
             "Check that the right column was chosen for postcodes."
         )
         raise AnalysisInputError(msg, role="postcode")
-    return tidy, blank, malformed
+    return tidy, blank, len(values) - blank - usable
+
+
+def _postcode_column_step(
+    supplied: int,
+    blank: int,
+    malformed: int,
+    usable: int,
+    privacy: LeftOut | None = None,
+) -> Step:
+    """The step that says how many rows of the postcode column could be used."""
+    count, total = _say(privacy)
+    shown = total(supplied)
+    rows = f"{sentence_case(count(blank))} rows had"
+    if shown is not None:
+        rows = f"{shown} rows. {sentence_case(count(blank))} had"
+    return Step(
+        title="Read the postcode column",
+        detail=(
+            f"{rows} no postcode and {count(malformed)} held something that is "
+            "not shaped like a UK postcode. Those rows were left out and were "
+            "not sent anywhere."
+        ),
+        rows_in=shown,
+        rows_out=total(usable),
+    )
+
+
+def _say(
+    privacy: LeftOut | None,
+) -> tuple[Callable[[int], str], Callable[[int], int | None]]:
+    """How to say a count left out, and a total, for a step about rows.
+
+    With no ``privacy`` the rows are not people, so every count is given.
+    """
+    if privacy is None:
+        return str, _as_it_is
+    return privacy.count, privacy.total
+
+
+def _as_it_is(count: int) -> int | None:
+    """A total as it is, for a step that hides none."""
+    return count
 
 
 def _look_up_on_this_machine(
@@ -493,35 +633,63 @@ def _used_for(level: Level) -> str:
 
 
 def warn_left_out(
-    blank: int, malformed: int, not_found: int, use_table: bool, trail: Trail
+    blank: int,
+    malformed: int,
+    not_found: int,
+    use_table: bool,
+    trail: Trail,
+    privacy: LeftOut | None = None,
 ) -> None:
-    """Add a warning for each kind of row that could not be used."""
+    """Add a warning for each kind of row that could not be used.
+
+    With ``privacy``, the rows are people, and a few of them are not counted
+    exactly.
+    """
+
+    def rows(count: int) -> str:
+        if privacy is None or not is_small(count, privacy.threshold):
+            return plural(count, "row")
+        return sentence_case(f"{privacy.count(count)} rows")
+
     if blank:
-        trail.warnings.append(f"{plural(blank, 'row')} had no postcode.")
+        trail.warnings.append(f"{rows(blank)} had no postcode.")
     if malformed:
         trail.warnings.append(
-            f"{plural(malformed, 'row')} held something that is not shaped "
-            "like a UK postcode."
+            f"{rows(malformed)} held something that is not shaped like a UK postcode."
         )
     if not_found and use_table:
         trail.warnings.append(
-            f"{plural(not_found, 'row')} had a postcode that was not found. "
+            f"{rows(not_found)} had a postcode that was not found. "
             "It may be mistyped, or outside England and Wales."
         )
     elif not_found:
         trail.warnings.append(
-            f"{plural(not_found, 'row')} had a postcode that was not found. "
+            f"{rows(not_found)} had a postcode that was not found. "
             "It may be mistyped or no longer in use."
         )
 
 
-def count_by_neighbourhood(
-    codes: list[Any], counts: list[Any], trail: Trail
-) -> tuple[Counter[str], int]:
+@dataclass(frozen=True)
+class Counted:
+    """Counts given by neighbourhood, as they were read."""
+
+    counts: Counter[str]
+    rows: int
+    blank: int
+    # Every person counted has a neighbourhood, so none is left out before the
+    # neighbourhoods are joined to an index.
+    left_out: tuple[tuple[int, ...], ...] = ()
+
+    @property
+    def supplied(self) -> int:
+        """The people in the rows that have a code."""
+        return sum(self.counts.values())
+
+
+def read_neighbourhood_counts(codes: list[Any], counts: list[Any]) -> Counted:
     """Total the counts given for each neighbourhood code.
 
-    Returns:
-        People per neighbourhood code, and the number of people supplied.
+    Nothing is written yet: see :func:`note_neighbourhood_counts`.
     """
     totals: Counter[str] = Counter()
     blank = 0
@@ -536,21 +704,30 @@ def count_by_neighbourhood(
             totals[str(code).strip().upper()] += count
     if bad:
         raise AnalysisInputError(bad_counts(bad, NOT_A_COUNT), role="count")
-    if blank:
-        trail.warnings.append(f"{plural(blank, 'row')} had no neighbourhood code.")
-    supplied = sum(totals.values())
+    return Counted(totals, len(codes), blank)
+
+
+def note_neighbourhood_counts(counted: Counted, trail: Trail, privacy: LeftOut) -> None:
+    """Write how the counts by neighbourhood were read."""
+    if counted.blank:
+        trail.warnings.append(
+            f"{plural(counted.blank, 'row')} had no neighbourhood code."
+        )
+    people = ""
+    if privacy.total(counted.supplied) is not None:
+        people = f" and {counted.supplied} people"
     trail.working.append(
         Step(
             title="Read the neighbourhood counts",
             detail=(
-                f"{len(codes)} rows covering {len(totals)} neighbourhoods and "
-                f"{supplied} people. {blank} rows had no code and were left out."
+                f"{counted.rows} rows covering {len(counted.counts)} "
+                f"neighbourhoods{people}. {counted.blank} rows had no code and "
+                "were left out."
             ),
-            rows_in=len(codes),
-            rows_out=len(codes) - blank,
+            rows_in=counted.rows,
+            rows_out=counted.rows - counted.blank,
         )
     )
-    return totals, supplied
 
 
 # --- sums ------------------------------------------------------------------

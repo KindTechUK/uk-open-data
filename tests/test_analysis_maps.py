@@ -16,7 +16,7 @@ import pandas as pd
 import pytest
 
 from uk_open_data.analyses import load_map_boundaries, maps, render_map, run_analysis
-from uk_open_data.cli import EXIT_INPUT_ERROR, EXIT_OK, main
+from uk_open_data.cli import EXIT_OK, main
 
 SVG = "{http://www.w3.org/2000/svg}"
 ANALYSIS_ID = "reach-deprivation"
@@ -714,7 +714,7 @@ def test_points_closer_than_a_dot_are_left_out():
     assert maps._thinned([]) == []
 
 
-def test_command_line_saves_the_map(tmp_path, capsys):
+def test_command_line_saves_the_map(tmp_path):
     counts = tmp_path / "counts.csv"
     counts.write_text(
         "lsoa_code,count\n" + "".join(f"{_code(n)},{9 + n}\n" for n in range(6)),
@@ -732,5 +732,3 @@ def test_command_line_saves_the_map(tmp_path, capsys):
         args = ["analysis", "run", ANALYSIS_ID, str(counts), "--map", str(picture)]
         assert main([*args, "--map-layer", "people"]) == EXIT_OK
         assert "kindtech-map-people" in picture.read_text(encoding="utf-8")
-        assert main([*args, "--map-layer", "income"]) == EXIT_INPUT_ERROR
-    assert "no layer called 'income'" in capsys.readouterr().err

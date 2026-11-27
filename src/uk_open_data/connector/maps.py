@@ -14,8 +14,6 @@ import threading
 from collections.abc import Callable, Iterable
 from typing import Any
 
-import requests
-
 from uk_open_data.analyses import AnalysisResult, load_map_boundaries, render_map
 from uk_open_data.connector.privacy import find_row_values
 
@@ -102,8 +100,10 @@ def picture_for(
     except TimeoutError:
         logger.warning("A map was not drawn: its outlines took too long.")
         return None, TOO_SLOW
-    except (requests.RequestException, ValueError) as error:
-        # The error text can hold a web address, so only its kind is logged.
+    except (OSError, ValueError) as error:
+        # OSError covers a request that failed (requests' errors are OSErrors)
+        # and outlines a host reads from its own files. The error text can
+        # hold a web address or a path, so only its kind is logged.
         logger.warning("A map could not be drawn: %s", type(error).__name__)
         return None, NO_OUTLINES
     layers = _that_fit(layers)

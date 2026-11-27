@@ -28,7 +28,11 @@ from uk_open_data.analyses._steps import (
     read_postcode_column,
     warn_left_out,
 )
-from uk_open_data.analyses.sources import ons_postcode_lookup
+from uk_open_data.analyses.sources import (
+    KEPT_COPY_USED,
+    kept_copy,
+    ons_postcode_lookup,
+)
 from uk_open_data.geo import load_geodata
 from uk_open_data.geo._catalog import find_services, get_service_url
 from uk_open_data.postcodes import (
@@ -135,10 +139,8 @@ def load_centres(trail: Trail) -> dict[str, Position]:
     kept = _read_kept(level)
     if kept is not None:
         rows, note = kept
-        source = replace(
-            source, edition=f"{source.edition}. A copy kept on this machine, {note}"
-        )
-        where = "A copy kept on this machine was used, so nothing was fetched."
+        source = kept_copy(source, note)
+        where = KEPT_COPY_USED
     else:
         try:
             rows = _fetch_centres()
@@ -197,14 +199,7 @@ def locate_in_neighbourhoods(values: list[Any], trail: Trail) -> list[Position |
     trail.sources.append(
         replace(table, used_for="Finding the neighbourhood each site is in.")
     )
-    trail.sources.append(
-        replace(
-            NEIGHBOURHOOD_CENTRES,
-            edition=(
-                f"{NEIGHBOURHOOD_CENTRES.edition}. A copy kept on this machine, {note}"
-            ),
-        )
-    )
+    trail.sources.append(kept_copy(NEIGHBOURHOOD_CENTRES, note))
     trail.choices.append(
         Choice(
             id="postcode_lookup",

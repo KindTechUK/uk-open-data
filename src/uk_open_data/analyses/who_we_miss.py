@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from collections import Counter
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
@@ -21,7 +21,13 @@ import narwhals as nw
 
 import uk_open_data
 from uk_open_data._kept import kept_file, read_kept, write_kept
-from uk_open_data.analyses._answers import AREA, names, number
+from uk_open_data.analyses._answers import (
+    AREA,
+    names,
+    number,
+    sentence_case,
+    shown_first,
+)
 from uk_open_data.analyses._inputs import is_blank, to_count
 from uk_open_data.analyses._labels import LABELS, said
 from uk_open_data.analyses._model import (
@@ -43,7 +49,14 @@ from uk_open_data.analyses._model import (
     Step,
     Table,
 )
-from uk_open_data.analyses._privacy import SECOND_COUNT_NOTE, cells_to_hide
+from uk_open_data.analyses._privacy import (
+    LEFT_OUT_NOTE,
+    SECOND_COUNT_NOTE,
+    LeftOut,
+    cells_to_hide,
+    hide_totals,
+    is_small,
+)
 from uk_open_data.analyses._steps import (
     COUNTRIES,
     EVERYWHERE,
@@ -51,24 +64,32 @@ from uk_open_data.analyses._steps import (
     NOT_A_COUNT,
     POSTCODE_LOOKUP,
     SUPPRESS_BELOW,
+    Placed,
     Trail,
     bad_counts,
     before_rounding,
+    find_postcodes,
     named_areas,
+    note_placed,
     percent,
-    place_postcodes,
     read_min_share,
     read_threshold,
     use_postcode_table,
 )
-from uk_open_data.analyses.sources import nomis_table
+from uk_open_data.analyses.sources import KEPT_COPY_USED, kept_copy, nomis_table
 from uk_open_data.ons import load_ons
 
 ANALYSIS_ID = "who-we-miss"
 ANALYSIS_VERSION = "0.1"
 # People matched to no group are left out of every share, so they are shown
 # beside the people who were matched.
-KEY_FIGURES = ("groups_under_represented", "people_matched", "people_not_matched")
+KEY_FIGURES = (
+    "groups_under_represented",
+    "people_matched",
+    "people_not_matched",
+    # This stands in when the figure above is hidden.
+    "residents",
+)
 RESIDENTS_FOLDER = "residents"
 RESIDENTS_FILE_FORMAT = "kindtech-residents-1"
 # Nomis code for a count of people, as opposed to a percentage.
@@ -266,6 +287,7 @@ INFO = AnalysisInfo(
         ),
     ),
     coverage=EVERYWHERE,
+    has_map=False,
 )
 
 CAVEATS = (
@@ -323,26 +345,37 @@ def run(analysis_input: AnalysisInput) -> AnalysisResult:
     else:
         weights = [1] * len(labels)
     supplied = sum(weights)
-    places = None
+    placed = None
     if mode == "postcodes":
-        places = place_postcodes(
+        placed = find_postcodes(
             analysis_input.values["postcode"],
             use_postcode_table(options),
             trail,
             LOCAL_AUTHORITY,
         )
+    places = None if placed is None else placed.codes
     catchment = _catchment(
         options.get("catchment"), residents, places, weights, min_share
     )
     if places is not None:
-        weights = _keep_catchment(places, weights, catchment, trail)
-    people, not_matched = _count_groups(
-        labels, weights, characteristic, by_hand, threshold, trail
-    )
+        weights = _keep_catchment(places, weights, catchment)
+    groups = _count_groups(labels, weights, characteristic, by_hand, threshold)
+    # Nothing that counts people is written until the totals that would give
+    # away a few people left out are known.
+    privacy = _left_out(groups, sum(weights), placed, threshold)
+    if placed is not None:
+        note_placed(placed, trail, privacy)
+        _note_catchment(placed.found, sum(weights), catchment, privacy, trail)
+    _note_groups(groups, privacy, trail)
+    people, not_matched = groups.people, groups.not_matched
     lived = _residents_of(catchment, residents)
     hide = cells_to_hide(people, threshold)
     rows = _group_rows(characteristic, people, lived, hide, cut)
+    figures = _figures(
+        supplied, sum(weights), people, not_matched, lived, rows, privacy
+    )
     trail.hidden += sum(hide)
+    trail.hidden += sum(figure.suppressed for figure in figures)
     trail.working.append(
         Step(
             title="Set your people against residents",
@@ -359,9 +392,10 @@ def run(analysis_input: AnalysisInput) -> AnalysisResult:
         Step(
             title="Hid small counts",
             detail=(
-                f"Counts from 1 to {threshold - 1} for a group were hidden, "
-                "along with anything that would let them be worked out. "
-                f"{trail.hidden} cells were hidden."
+                f"Counts from 1 to {threshold - 1} for a group, or of people "
+                "left out, were hidden, along with anything that would let "
+                f"them be worked out. {trail.hidden} cells or figures were "
+                "hidden."
             ),
         )
     )
@@ -371,9 +405,7 @@ def run(analysis_input: AnalysisInput) -> AnalysisResult:
         package_version=uk_open_data.__version__,
         run_on=date.today().isoformat(),
         input_mode=mode,
-        figures=tuple(
-            _figures(supplied, sum(weights), people, not_matched, lived, rows)
-        ),
+        figures=tuple(figures),
         tables=(_group_table(rows),),
         map=None,
         working=tuple(trail.working),
@@ -388,7 +420,7 @@ def run(analysis_input: AnalysisInput) -> AnalysisResult:
         privacy=_privacy(threshold, trail),
         charts=(CHART,),
         answer=_answer(rows),
-        key_figures=KEY_FIGURES,
+        key_figures=shown_first(figures, KEY_FIGURES),
     )
 
 
@@ -468,11 +500,8 @@ def _load_residents(characteristic: _Characteristic, trail: Trail) -> _Residents
         )
         raise AnalysisInputError(msg) from error
     if residents is not None:
-        source = replace(
-            source,
-            edition=f"{source.edition}. A copy kept on this machine, {residents.note}",
-        )
-        where = "A copy kept on this machine was used, so nothing was fetched."
+        source = kept_copy(source, residents.note)
+        where = KEPT_COPY_USED
     else:
         try:
             residents = _fetch_residents(characteristic.id)
@@ -651,17 +680,12 @@ def download_residents(characteristic: str = ETHNIC_GROUP.id) -> Path:
     chosen = _known(characteristic)
     clear_residents_cache()
     fetched = _fetch_residents(chosen.id)
-    content = {
-        "characteristic": chosen.id,
-        "dataset": chosen.dataset,
-        "groups": list(chosen.keys),
-        "residents": [
-            [code, fetched.names[code], list(counts)]
-            for code, counts in fetched.counts.items()
-        ],
-    }
+    residents = (
+        (code, fetched.names[code], dict(zip(chosen.keys, counts, strict=True)))
+        for code, counts in fetched.counts.items()
+    )
     note = f"fetched from Nomis on {date.today().isoformat()}."
-    return write_kept(RESIDENTS_FOLDER, chosen.id, RESIDENTS_FILE_FORMAT, note, content)
+    return keep_residents(chosen.id, residents, note)
 
 
 def clear_residents_cache() -> None:
@@ -717,19 +741,32 @@ def _match(label: str, characteristic: _Characteristic) -> str | None:
     return "Other" if "other" in words else None
 
 
+@dataclass(frozen=True)
+class _Groups:
+    """People counted by census group, and the people matched to none."""
+
+    people: list[int]
+    not_matched: int
+    blank: int
+    labels: int
+    set_by_hand: int
+
+    @property
+    def matched(self) -> int:
+        """The people matched to a group. The shares are of these people."""
+        return sum(self.people)
+
+
 def _count_groups(
     labels: list[Any],
     weights: list[int],
     characteristic: _Characteristic,
     by_hand: dict[str, str],
     threshold: int,
-    trail: Trail,
-) -> tuple[list[int], int]:
-    """Count people by census group.
+) -> _Groups:
+    """Count people by census group, in census order.
 
-    Returns:
-        People per group in census order, and people whose label matched no
-        group.
+    Nothing is written yet: see :func:`_note_groups`.
     """
     per_label: Counter[str] = Counter()
     blank = 0
@@ -750,35 +787,46 @@ def _count_groups(
             not_matched += people
         else:
             counts[group] += people
-    matched = sum(counts.values())
+    if sum(counts.values()) < threshold:
+        msg = _too_few_matched(not_matched, threshold)
+        raise AnalysisInputError(msg, role="group")
+    people = [counts[key] for key in characteristic.keys]
+    return _Groups(people, not_matched, blank, len(per_label), set_by_hand)
+
+
+def _note_groups(groups: _Groups, privacy: LeftOut, trail: Trail) -> None:
+    """Write how many people were matched to a census group."""
+    not_matched = privacy.count(groups.not_matched)
+    with_no_label = f", {privacy.count(groups.blank)} of them with no label"
+    # The people whose label matched nothing would be the rest.
+    if groups.blank >= privacy.threshold and is_small(
+        groups.not_matched - groups.blank, privacy.threshold
+    ):
+        with_no_label = ""
     trail.working.append(
         Step(
             title="Matched your labels to census groups",
             detail=(
-                f"{len(per_label)} distinct labels. {set_by_hand} were set in "
-                f"{said('groups')} and the rest were matched by their "
-                f"wording. {matched} people were matched to a group and "
-                f"{not_matched} were not, {blank} of them with no label."
+                f"{groups.labels} distinct labels. {groups.set_by_hand} were set "
+                f"in {said('groups')} and the rest were matched by their "
+                f"wording. {groups.matched} people were matched to a group and "
+                f"{not_matched} were not{with_no_label}."
             ),
-            rows_in=matched + not_matched,
-            rows_out=matched,
+            rows_in=privacy.total(groups.matched + groups.not_matched),
+            rows_out=groups.matched,
         )
     )
-    if not_matched:
+    if groups.not_matched:
         trail.warnings.append(
-            f"{not_matched} people have no label, or a label that matched no "
-            f"census group. They are left out of the shares. Use {said('groups')} "
-            "to say which group a label belongs to."
+            f"{sentence_case(not_matched)} people have no label, or a label "
+            "that matched no census group. They are left out of the shares. "
+            f"Use {said('groups')} to say which group a label belongs to."
         )
-    if matched < threshold:
-        msg = _too_few_matched(not_matched, threshold)
-        raise AnalysisInputError(msg, role="group")
-    if matched < FEW_PEOPLE:
+    if groups.matched < FEW_PEOPLE:
         trail.warnings.append(
             f"Fewer than {FEW_PEOPLE} people were matched to a group. With so "
             "few, a gap between two shares can be chance."
         )
-    return [counts[key] for key in characteristic.keys], not_matched
 
 
 def _too_few_matched(not_matched: int, threshold: int) -> str:
@@ -850,35 +898,70 @@ def _keep_catchment(
     places: list[str | None],
     weights: list[int],
     catchment: _Catchment,
-    trail: Trail,
 ) -> list[int]:
-    """Give no weight to people who live outside the catchment."""
+    """Give no weight to people who live outside the catchment.
+
+    Nothing is written yet: see :func:`_note_catchment`.
+    """
     inside = set(catchment.codes)
-    kept = [
+    return [
         weight if place in inside else 0
         for place, weight in zip(places, weights, strict=True)
     ]
-    located = sum(1 for place in places if place is not None)
+
+
+def _left_out(
+    groups: _Groups, inside: int, placed: Placed | None, threshold: int
+) -> LeftOut:
+    """Decide which totals to hide, so a few people left out cannot be found.
+
+    From the people matched to a group out: those matched to none, then, with
+    postcodes, those who live outside the area you serve and the rows that
+    could not be placed at all.
+    """
+    left_out: tuple[tuple[int, ...], ...] = ((groups.not_matched,),)
+    if placed is not None:
+        left_out += ((placed.found - inside,), *placed.left_out)
+    return hide_totals(groups.matched, left_out, threshold)
+
+
+def _note_catchment(
+    located: int,
+    inside: int,
+    catchment: _Catchment,
+    privacy: LeftOut,
+    trail: Trail,
+) -> None:
+    """Write how many of the people located live in the catchment."""
+    outside = sentence_case(privacy.count(located - inside))
+    shown = privacy.total(located)
+    of_the = "of the" if shown is None else f"of the {shown}"
+    detail = (
+        f"{inside} {of_the} people located live in {catchment.label}. The "
+        "rest are left out, because they are set against the residents of the "
+        "area you serve."
+    )
+    if privacy.total(inside) is None:
+        detail = (
+            f"{outside} {of_the} people located live outside "
+            f"{catchment.label}. They are left out, because your people are "
+            "set against the residents of the area you serve."
+        )
     trail.working.append(
         Step(
             title="Kept the people who live in the area you serve",
-            detail=(
-                f"{sum(kept)} of the {located} people located live in "
-                f"{catchment.label}. The rest are left out, because they are "
-                "set against the residents of the area you serve."
-            ),
-            rows_in=located,
-            rows_out=sum(kept),
+            detail=detail,
+            rows_in=shown,
+            rows_out=privacy.total(inside),
         )
     )
-    if sum(kept) < located:
+    if inside < located:
         trail.warnings.append(
-            f"{located - sum(kept)} people live outside the area you serve, "
-            "or in a local authority the census figures do not list (for "
-            "example one whose boundary has changed), and are left out. "
-            f"Change {said('catchment')} to include them."
+            f"{outside} people live outside the area you serve, or in a local "
+            "authority the census figures do not list (for example one whose "
+            "boundary has changed), and are left out. Change "
+            f"{said('catchment')} to include them."
         )
-    return kept
 
 
 def _residents_of(catchment: _Catchment, residents: _Residents) -> list[float]:
@@ -954,6 +1037,7 @@ def _figures(
     not_matched: int,
     lived: list[float],
     rows: list[dict[str, Any]],
+    privacy: LeftOut,
 ) -> list[Figure]:
     """Build the headline figures."""
     hidden = sum(1 for row in rows if row["suppressed"])
@@ -961,12 +1045,11 @@ def _figures(
     if hidden:
         note = f"{hidden} groups have a hidden count and are not judged."
     return [
-        Figure("people_supplied", "People in the data you gave", supplied, "people"),
-        Figure(
+        privacy.figure("people_supplied", "People in the data you gave", supplied),
+        privacy.figure(
             "people_in_catchment",
             "People set against the residents of the area you serve",
             considered,
-            "people",
             note=(
                 "With postcodes, the people who live in the area you serve. "
                 "Without, everyone in your data."
@@ -979,12 +1062,7 @@ def _figures(
             "people",
             note="The shares below are of these people.",
         ),
-        Figure(
-            "people_not_matched",
-            "People with no label, or one that matched no census group",
-            not_matched,
-            "people",
-        ),
+        _not_matched_figure(not_matched, privacy.threshold),
         Figure(
             "residents",
             "Residents of the area you serve in the 2021 Census",
@@ -1000,6 +1078,21 @@ def _figures(
         ),
         *_shares_behind_the_answer(people, lived, rows),
     ]
+
+
+def _not_matched_figure(not_matched: int, threshold: int) -> Figure:
+    """The people matched to no group, a group left out like any other."""
+    label = "People with no label, or one that matched no census group"
+    if is_small(not_matched, threshold):
+        return Figure(
+            "people_not_matched",
+            label,
+            None,
+            "people",
+            note="Hidden to protect a small count.",
+            suppressed=True,
+        )
+    return Figure("people_not_matched", label, not_matched, "people")
 
 
 def _shares_behind_the_answer(
@@ -1222,9 +1315,10 @@ def _privacy(threshold: int, trail: Trail) -> Privacy:
         notes=(
             "A count is hidden when it is small and is about a group.",
             SECOND_COUNT_NOTE,
+            LEFT_OUT_NOTE,
             "The result names census groups, never the labels in your data.",
-            "The number of people matched to no group is shown even when it "
-            "is small, because it says nothing about which group they are in.",
+            "People matched to no group are left out of the shares, so their "
+            "number is hidden when it is small, like any few people left out.",
             "The census figures are public counts and are shown in full.",
             "A second run with a different area gives a second set of "
             "counts. Publish one, because a small count can be worked out by "

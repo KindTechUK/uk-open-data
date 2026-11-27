@@ -1011,3 +1011,37 @@ def test_command_line_runs_the_analysis(kept, tmp_path, capsys):
     assert payload["analysis_id"] == ANALYSIS_ID
     figures = {figure["id"]: figure["value"] for figure in payload["figures"]}
     assert figures["areas_beyond_reach"] == 3
+
+
+def test_command_line_report_when_nowhere_is_beyond_reach(kept, tmp_path, capsys):
+    # The list of places far from a site is empty, and the report still prints.
+    path = tmp_path / "sites.csv"
+    path.write_text("Lat,Lon\n51.4613,-0.0117\n53.48,-2.24\n", encoding="utf-8")
+    code = main(
+        [
+            "analysis",
+            "run",
+            ANALYSIS_ID,
+            str(path),
+            "--column",
+            "latitude=Lat",
+            "--column",
+            "longitude=Lon",
+            "--option",
+            "within_km=500",
+        ]
+    )
+    assert code == EXIT_OK
+    assert "No local authority in the area you serve" in capsys.readouterr().out
+
+
+def test_an_area_where_the_need_counts_nobody_is_an_input_error():
+    keep_need_figures(
+        "residents",
+        [("E09000023", "Lewisham", 0), ("E09000011", "Greenwich", 0)],
+        "invented for a test.",
+    )
+    keep_centres(CENTRES, "invented for a test.")
+    with pytest.raises(AnalysisInputError, match="count nobody") as raised:
+        _run(options={"need": "residents"})
+    assert raised.value.option == "need"

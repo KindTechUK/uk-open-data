@@ -94,6 +94,19 @@ class TestThePicture:
             maps.NO_OUTLINES,
         )
 
+    def test_outlines_kept_on_a_server_that_cannot_be_read_leave_the_figures_alone(
+        self,
+    ) -> None:
+        result = run_analysis("reach-deprivation", COUNTS)
+
+        def unreadable(_: object) -> dict[str, Any]:
+            raise FileNotFoundError("the outlines file is missing")
+
+        assert picture_for(result, boundaries=unreadable) == (
+            None,
+            maps.NO_OUTLINES,
+        )
+
     def test_outlines_that_give_nothing_are_treated_the_same(self) -> None:
         result = run_analysis("reach-deprivation", COUNTS)
 

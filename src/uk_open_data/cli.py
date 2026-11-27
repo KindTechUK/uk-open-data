@@ -252,6 +252,8 @@ def _handle_describe(args: argparse.Namespace) -> str:
 def _handle_run(args: argparse.Namespace) -> str:
     """Run an analysis on a file."""
     info = describe_analysis(args.analysis_id)
+    if args.map is not None and not info.has_map:
+        raise ValueError("This analysis has no map yet. Run it without --map.")
     rows = _read_rows(args.file, args.sheet)
     columns = dict(_split_pair(pair, "--column") for pair in args.column)
     options = {
@@ -279,7 +281,17 @@ def _write_map(result: AnalysisResult, layer: str | None, path: Path) -> bool:
 
     Fetching can be slow, so the command says first that it is fetching. That
     goes to standard error, which leaves the report as it is.
+
+    Raises:
+        ValueError: If the result has no map, or its map has no layer called
+            ``layer``. Both are checked before anything is fetched.
     """
+    if result.map is None:
+        raise ValueError("This result has no map.")
+    known = [item.id for item in result.map.layers]
+    if layer is not None and layer not in known:
+        msg = f"The map has no layer of that name. Its layers are: {', '.join(known)}."
+        raise ValueError(msg)
     sys.stderr.write(MAP_BEING_FETCHED + "\n")
     sys.stderr.flush()
     quiet = logging.NullHandler()
@@ -293,7 +305,11 @@ def _write_map(result: AnalysisResult, layer: str | None, path: Path) -> bool:
         outlines_log.removeHandler(quiet)
     if not boundaries["features"]:
         return False
-    svg = render_map(result, layer=layer, boundaries=boundaries)
+    try:
+        svg = render_map(result, layer=layer, boundaries=boundaries)
+    except ValueError:
+        # No outline that came matches an area in the result.
+        return False
     path.write_text(svg + "\n", encoding="utf-8")
     return True
 
@@ -578,7 +594,8 @@ def _table_lines(table: Table) -> list[str]:
     ]
     headings = [table.headings[column] for column in columns]
     widths = [
-        max(len(heading), *(len(row[index]) for row in cells))
+        # A list, so a table with no rows still has a width for each column.
+        max([len(heading), *(len(row[index]) for row in cells)])
         for index, heading in enumerate(headings)
     ]
     return [

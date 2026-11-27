@@ -145,6 +145,9 @@ class AnalysisInfo:
     input_modes: tuple[InputMode, ...]
     options: tuple[Option, ...] = ()
     coverage: str = ""
+    # False for an analysis whose result never has a map, so a map can be
+    # refused before anything is fetched.
+    has_map: bool = True
 
     def to_dict(self) -> dict[str, Any]:
         """Return this description as plain JSON types."""

@@ -16,14 +16,19 @@ postcodes.io when not; the answer says which.
 
 import logging
 import re
-from dataclasses import asdict, replace
+from dataclasses import asdict
 from functools import lru_cache
 from typing import Any
 
 import narwhals.stable.v2 as nw
 import requests
 
-from uk_open_data.analyses.sources import IOD_2025, POSTCODES_IO, ons_postcode_lookup
+from uk_open_data.analyses.sources import (
+    IOD_2025,
+    POSTCODES_IO,
+    kept_copy,
+    ons_postcode_lookup,
+)
 from uk_open_data.connector.privacy import ensure_totals_only, looks_like_postcode
 from uk_open_data.imd import imd_path, kept_imd_note, load_imd
 from uk_open_data.postcodes import (
@@ -543,10 +548,7 @@ def _index() -> tuple[list[dict[str, Any]], dict[str, Any]]:
         {key: _plain(value) for key, value in row.items()}
         for row in frame.select(_COLUMNS).rows(named=True)
     ]
-    source = IOD_2025
-    if note is not None:
-        edition = f"{IOD_2025.edition}. A copy kept on this machine, {note}"
-        source = replace(IOD_2025, edition=edition)
+    source = IOD_2025 if note is None else kept_copy(IOD_2025, note)
     return rows, asdict(source)
 
 
