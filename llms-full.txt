@@ -3768,17 +3768,12 @@ The postcode table lets you look them up locally instead.
 
 The table is one file of a few megabytes that maps every postcode in
 England and Wales to its 2021 LSOA and local authority. It is built from the
-ONS best-fit postcode lookup. Fetch it once:
+ONS best-fit postcode lookup. This version of the package fetches the May 2026
+edition, 2,409,013 postcodes in about 6 MB. Fetch it once:
 
 ```bash
 uk-open-data postcodes download
 ```
-
-!!! note "Before the first table is published"
-    The first table is published with version 0.2. Until then
-    `postcodes download` has nothing to fetch on its own: build a table from
-    the ONS lookup with `uk-open-data postcodes build`, host it, and pass
-    `--url` and `--sha256`.
 
 or from Python with `download_postcode_table()`. The file is public and the
 same for everyone, so fetching it says nothing about your data, and it is

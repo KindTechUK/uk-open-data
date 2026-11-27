@@ -1316,16 +1316,10 @@ to the people a charity helps, you may not want them to leave your machine.
 The postcode table lets you look them up locally instead.</p>
 <p>The table is one file of a few megabytes that maps every postcode in
 England and Wales to its 2021 LSOA and local authority. It is built from the
-ONS best-fit postcode lookup. Fetch it once:</p>
+ONS best-fit postcode lookup. This version of the package fetches the May 2026
+edition, 2,409,013 postcodes in about 6 MB. Fetch it once:</p>
 <div class="highlight"><pre><span></span><code>uk-open-data<span class="w"> </span>postcodes<span class="w"> </span>download
 </code></pre></div>
-<div class="admonition note">
-<p class="admonition-title">Before the first table is published</p>
-<p>The first table is published with version 0.2. Until then
-<code>postcodes download</code> has nothing to fetch on its own: build a table from
-the ONS lookup with <code>uk-open-data postcodes build</code>, host it, and pass
-<code>--url</code> and <code>--sha256</code>.</p>
-</div>
 <p>or from Python with <code>download_postcode_table()</code>. The file is public and the
 same for everyone, so fetching it says nothing about your data, and it is
 checked against a SHA-256 before it is installed. After that, nothing below
