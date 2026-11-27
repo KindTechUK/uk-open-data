@@ -208,7 +208,7 @@ def test_to_count_accepts_whole_numbers(raw, expected):
 
 @pytest.mark.parametrize(
     "raw",
-    [-1, 2.5, "many", None, "", True, float("nan"), "1e400"],
+    [-1, 2.5, "many", None, "", True, float("nan")],
 )
 def test_to_count_rejects_everything_else(raw):
     assert to_count(raw) is None
@@ -1108,17 +1108,21 @@ def test_rows_are_pointed_at_by_where_they_are(positions, said):
     assert where_rows(positions) == f"{said}, counting from the first row of data"
 
 
-def test_a_bad_count_says_which_row_without_repeating_it(world):
+@pytest.mark.parametrize(
+    ("count", "private"),
+    [("about forty", "forty"), ("1e400", "1e400")],
+)
+def test_a_bad_count_says_which_row_without_repeating_it(world, count, private):
     rows = [
         {"lsoa_code": _area_code(0, 1), "count": 30},
-        {"lsoa_code": _area_code(0, 2), "count": "about forty"},
+        {"lsoa_code": _area_code(0, 2), "count": count},
     ]
     with pytest.raises(AnalysisInputError) as raised:
         world.run(rows, columns={"lsoa_code": "lsoa_code", "count": "count"})
     assert str(raised.value).startswith(
         "1 row had a count that is not a whole number of zero or more: row 2,"
     )
-    assert "forty" not in str(raised.value)
+    assert private not in str(raised.value)
     assert raised.value.role == "count"
 
 
